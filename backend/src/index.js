@@ -9,6 +9,10 @@ const authRoutes = require('./routes/auth.routes');
 
 const app = express();
 
+const http = require('http');
+const server = http.createServer(app);
+const { initSocketServer } = require('./socket');
+
 // Basic security and parsing
 app.use(helmet());
 app.use(cors({
@@ -73,3 +77,15 @@ if (require.main === module) {
         process.exit(1);
     });
 }
+
+app.use(express.json());
+// mount admin routes
+const adminRoutes = require('./routes/admin.routes');
+app.use('/admin', adminRoutes);
+
+// start socket.io
+const io = initSocketServer(server);
+
+// start server
+const PORT = process.env.PORT || 4000;
+server.listen(PORT, () => console.log(`Server listening on ${PORT}`));
