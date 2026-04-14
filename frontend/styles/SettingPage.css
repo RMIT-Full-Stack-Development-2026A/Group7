@@ -1,0 +1,234 @@
+/* Background Gradients */
+.bg-dark-gradient {
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0f172a 100%);
+  min-height: 100vh;
+  transition: background 0.3s ease;
+}
+
+.bg-light-gradient {
+  background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 50%, #f3e8ff 100%);
+  min-height: 100vh;
+  transition: background 0.3s ease;
+}
+
+/* Section Cards */
+.section-dark {
+  background-color: rgba(30, 41, 59, 0.5);
+  border: 1px solid #334155;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.section-light {
+  background-color: rgba(255, 255, 255, 0.7);
+  border: 1px solid #c7d2fe;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+/* Theme Card */
+.theme-card {
+  transition: all 0.3s ease;
+}
+
+.card-dark {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+}
+
+.card-light {
+  background-color: rgba(255, 255, 255, 0.7);
+  border: 1px solid #c7d2fe;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* Slider Styles */
+.slider-label {
+  min-width: 120px;
+  margin-bottom: 0;
+}
+
+.slider-value {
+  min-width: 50px;
+  text-align: right;
+}
+
+.form-range.slider-dark {
+  background-color: #334155;
+}
+
+.form-range.slider-light {
+  background-color: #c7d2fe;
+}
+
+.form-range::-webkit-slider-thumb {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.form-range::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+.form-range::-moz-range-thumb {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  transition: all 0.2s;
+}
+
+.form-range::-moz-range-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+/* Selector Styles */
+.selector-label {
+  min-width: 120px;
+  margin-bottom: 0;
+}
+
+.form-select.select-dark {
+  background-color: #334155;
+  color: #e5e7eb;
+  border-color: #475569;
+}
+
+.form-select.select-light {
+  background-color: #fff;
+  color: #1f2937;
+  border-color: #c7d2fe;
+}
+
+.form-select.select-dark:focus {
+  background-color: #334155;
+  color: #e5e7eb;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
+}
+
+.form-select.select-light:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.25);
+}
+
+/* Toggle Switch */
+.toggle-switch {
+  position: relative;
+  width: 64px;
+  height: 32px;
+  border-radius: 16px;
+  border: none;
+  background-color: #6b7280;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  padding: 0;
+}
+
+.toggle-switch.active {
+  background-color: #3b82f6;
+}
+
+.toggle-slider {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: white;
+  transition: transform 0.3s;
+}
+
+.toggle-switch.active .toggle-slider {
+  transform: translateX(32px);
+}
+
+/* Custom Button Styles */
+.btn-orange {
+  background-color: #f97316;
+  color: white;
+  border: none;
+  transition: all 0.2s;
+}
+
+.btn-orange:hover {
+  background-color: #ea580c;
+  color: white;
+}
+
+/* Move Option Buttons */
+.move-option-btn {
+  min-width: 80px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-indigo {
+  background-color: #6366f1;
+  color: white;
+  border: none;
+}
+
+.btn-indigo:hover {
+  background-color: #4f46e5;
+  color: white;
+}
+
+.btn-outline-indigo {
+  border: 1px solid #c7d2fe;
+  background-color: #e0e7ff;
+  color: #4b5563;
+}
+
+.btn-outline-indigo:hover {
+  background-color: #c7d2fe;
+  color: #1f2937;
+}
+
+/* Save Panel */
+.save-panel {
+  z-index: 1050;
+  animation: slide-up 0.3s ease-out;
+}
+
+.save-panel-dark {
+  background-color: #1e293b;
+  border-top: 1px solid #334155;
+}
+
+.save-panel-light {
+  background-color: #fff;
+  border-top: 1px solid #c7d2fe;
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Color Utilities */
+.text-indigo {
+  color: #6366f1 !important;
+}
+
+/* Gap Utilities (Bootstrap 5 native, but ensuring compatibility) */
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.gap-3 {
+  gap: 1rem;
+}
