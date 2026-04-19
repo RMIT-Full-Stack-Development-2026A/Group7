@@ -1,10 +1,33 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../components/RoomSettingsForm/RoomSettingsForm.css';
 import { useRoomSettingsForm } from '../hooks/useRoomSettingsForm.js';
+import ROUTES from '../../../router/routes.config.js';
+import { applyThemeToDocument, loadGameSettings } from '../../../shared/utils/gameSettings.js';
 
 const CreateRoomPage = ({ onCreateRoom }) => {
   const navigate = useNavigate();
+  const [isLightTheme, setIsLightTheme] = useState(false);
+
+  useEffect(() => {
+    const syncTheme = () => {
+      const savedSettings = loadGameSettings();
+      applyThemeToDocument(savedSettings);
+      const documentTheme = document.documentElement.getAttribute('data-app-theme');
+      setIsLightTheme(documentTheme === 'light' || savedSettings.darkMode === false);
+    };
+
+    syncTheme();
+
+    window.addEventListener('focus', syncTheme);
+    window.addEventListener('storage', syncTheme);
+
+    return () => {
+      window.removeEventListener('focus', syncTheme);
+      window.removeEventListener('storage', syncTheme);
+    };
+  }, []);
+
   const handleRoomCreated = (room) => {
     if (typeof onCreateRoom === 'function') {
       onCreateRoom(room);
@@ -12,7 +35,7 @@ const CreateRoomPage = ({ onCreateRoom }) => {
     }
 
     navigate('/gameroom', {
-      state: { createdRoom: room },
+      state: { createdRoom: room, returnTo: ROUTES.CREATE_ROOM },
     });
   };
 
@@ -39,7 +62,16 @@ const CreateRoomPage = ({ onCreateRoom }) => {
   } = useRoomSettingsForm(handleRoomCreated);
 
   return (
-    <div className="game-setup-container">
+    <div className={`game-setup-container ${isLightTheme ? 'theme-light' : 'theme-dark'}`}>
+      <button
+        type="button"
+        className="setup-back-btn"
+        onClick={() => navigate(ROUTES.MAIN_MENU)}
+      >
+        <span className="setup-back-icon">←</span>
+        <span>Back to Main Menu</span>
+      </button>
+
       <div className="setup-card">
         <h1 className="setup-title">Create Your Game Room</h1>
 

@@ -1,8 +1,8 @@
-import Game from './game.model.js'
-import Gameroom from '../gameroom/gameroom.model.js'
-import { ErrorResponse } from '../../shared/errors/AppErrors.js'
+const Game = require('./game.model')
+const Gameroom = require('../gameroom/gameroom.model')
+const { ErrorResponse } = require('../../shared/errors/AppErrors')
 
-export const createGameSession = async (roomId, playerIds) => {
+const createGameSession = async (roomId, playerIds) => {
   const room = await Gameroom.findById(roomId)
   if (!room) {
     throw new ErrorResponse('Room not found', 404)
@@ -19,7 +19,7 @@ export const createGameSession = async (roomId, playerIds) => {
   return gameSession.populate('players')
 }
 
-export const getGameSession = async (sessionId) => {
+const getGameSession = async (sessionId) => {
   const gameSession = await Game.findById(sessionId).populate('players').populate('roomId')
 
   if (!gameSession) {
@@ -29,7 +29,7 @@ export const getGameSession = async (sessionId) => {
   return gameSession
 }
 
-export const updateGameStatus = async (sessionId, status) => {
+const updateGameStatus = async (sessionId, status) => {
   const gameSession = await Game.findByIdAndUpdate(
     sessionId,
     { status, endTime: status === 'completed' ? new Date() : undefined },
@@ -43,7 +43,7 @@ export const updateGameStatus = async (sessionId, status) => {
   return gameSession
 }
 
-export const updateGameScore = async (sessionId, playerId, score) => {
+const updateGameScore = async (sessionId, playerId, score) => {
   const gameSession = await Game.findById(sessionId)
   if (!gameSession) {
     throw new ErrorResponse('Game session not found', 404)
@@ -55,7 +55,7 @@ export const updateGameScore = async (sessionId, playerId, score) => {
   return gameSession
 }
 
-export const setWinner = async (sessionId, winnerId) => {
+const setWinner = async (sessionId, winnerId) => {
   const gameSession = await Game.findByIdAndUpdate(
     sessionId,
     { winner: winnerId },
@@ -67,4 +67,12 @@ export const setWinner = async (sessionId, winnerId) => {
   }
 
   return gameSession
+}
+
+module.exports = {
+  createGameSession,
+  getGameSession,
+  updateGameStatus,
+  updateGameScore,
+  setWinner,
 }

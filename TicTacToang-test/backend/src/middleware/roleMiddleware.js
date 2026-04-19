@@ -1,11 +1,16 @@
-export const authorizeAdmin = (req, res, next) => {
-  if (req.user?.role !== 'admin')
-    return res.status(403).json({ message: 'Admin access only.' })
+const authorizeAdmin = (req, res, next) => {
+  if (req.user?.role !== 'admin') return res.status(403).json({ message: 'Admin access required.' })
   next()
 }
 
-export const authorizePlayer = (req, res, next) => {
-  if (!req.user)
-    return res.status(401).json({ message: 'Login required.' })
+const authorizePlayer = (req, res, next) => {
+  if (!req.user || !['player', 'admin', 'moderator'].includes(req.user.role)) {
+    return res.status(403).json({ message: 'Player access required.' })
+  }
   next()
+}
+
+module.exports = {
+  authorizeAdmin,
+  authorizePlayer,
 }

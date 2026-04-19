@@ -27,7 +27,7 @@ export const DEFAULT_ROOM_RESPONSE_SHAPE = {
     timeToThink: 60,
     gameMode: 'classic',
   },
-  status: 'pending',
+  status: 'available',
   createdAt: '',
   updatedAt: '',
 };

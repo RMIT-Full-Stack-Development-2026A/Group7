@@ -1,5 +1,18 @@
 import { Crown, X } from "lucide-react";
 import { usePlayerSlots } from '../../hooks/usePlayerSlots.js';
+import MamboAvatar from '../../../../shared/assets/images/Mambo.png';
+
+const resolveAvatarUrl = (avatar) => {
+  if (!avatar || avatar === 'Mambo.png') {
+    return MamboAvatar;
+  }
+
+  if (avatar.startsWith('blob:') || avatar.startsWith('http') || avatar.startsWith('data:')) {
+    return avatar;
+  }
+
+  return MamboAvatar;
+};
 
 export function PlayerSlot({ player, onRemove }) {
   const { isSquareBorder, canRemove, aiLabel } = usePlayerSlots(player, onRemove);
@@ -9,9 +22,12 @@ export function PlayerSlot({ player, onRemove }) {
       <div className="player-avatar-wrapper">
         <div className={`player-avatar-border ${isSquareBorder ? 'square' : 'circle'}`}>
           <img
-            src={player.avatar}
+            src={resolveAvatarUrl(player.avatar)}
             alt={player.name}
             className={`player-avatar ${isSquareBorder ? 'square' : 'circle'}`}
+            onError={(event) => {
+              event.currentTarget.src = MamboAvatar;
+            }}
           />
         </div>
 
@@ -35,7 +51,7 @@ export function PlayerSlot({ player, onRemove }) {
       </div>
 
       <div className="d-flex flex-column align-items-center gap-1">
-        <div style={{ fontSize: '0.875rem', fontWeight: 500, color: 'white' }}>{player.name}</div>
+        <div className="player-name">{player.name}</div>
 
         {aiLabel && <div className="ai-badge">{aiLabel}</div>}
       </div>

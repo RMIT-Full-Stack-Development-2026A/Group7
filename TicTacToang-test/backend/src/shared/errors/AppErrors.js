@@ -7,6 +7,9 @@ class AppError extends Error {
   }
 }
 
-export class ErrorResponse extends AppError {}
+class ErrorResponse extends AppError {}
 
-export default AppError
+module.exports = {
+  AppError,
+  ErrorResponse,
+}

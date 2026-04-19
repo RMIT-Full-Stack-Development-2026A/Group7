@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation }    from 'react-router-dom'
 import { validateLoginForm }           from '../modules/ValidationHandler'
 import { loginPlayer }                 from '../services/authService'
+import ROUTES                         from '../../../router/routes.config.js'
 
 export const useLogin = () => {
   const [loading,     setLoading]     = useState(false)
@@ -38,7 +39,7 @@ export const useLogin = () => {
         if (data.token) localStorage.setItem('token', data.token)
         if (data.user) localStorage.setItem('authUser', JSON.stringify(data.user))
         setLockInfo({ attempts: 0, locked: false, secondsLeft: 0 })
-        navigate('/createroom')
+        navigate(ROUTES.MAIN_MENU, { replace: true })
       } else {
         const newAttempts = lockInfo.attempts + 1
         if (status === 403 && data.locked) {

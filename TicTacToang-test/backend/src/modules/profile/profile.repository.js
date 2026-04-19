@@ -1,113 +1,137 @@
-const { getDB } = require('../../profile-management/database/dbConnect');
+const mongoose = require('mongoose')
 const {
-  PROFILE_COLLECTIONS,
-  buildDefaultProfile,
+  User,
+  ProfileSettings,
+  MailboxMessage,
   buildDefaultSettings,
   buildDefaultMailbox,
-} = require('./profile.model');
+  ensureProfileSeedData,
+} = require('./profile.model')
+
+const toObjectId = (value) => {
+  if (!value || !mongoose.Types.ObjectId.isValid(value)) {
+    return null
+  }
+
+  return new mongoose.Types.ObjectId(value)
+}
+
+const findUserByIdentifier = async (identifier) => {
+  const normalizedIdentifier = String(identifier || '').trim()
+  const objectId = toObjectId(normalizedIdentifier)
+
+  const query = objectId
+    ? {
+        $or: [
+          { _id: objectId },
+          { username: normalizedIdentifier },
+          { email: normalizedIdentifier.toLowerCase() },
+        ],
+      }
+    : {
+        $or: [
+          { username: normalizedIdentifier },
+          { email: normalizedIdentifier.toLowerCase() },
+        ],
+      }
+
+  return User.findOne(query)
+}
+
+const ensureUserByIdentifier = async (identifier) => {
+  const seededUser = await ensureProfileSeedData()
+  const matchedUser = await findUserByIdentifier(identifier)
+  return matchedUser || seededUser
+}
 
 const getProfileByUserId = async (userId) => {
-  const db = await getDB();
-  const collection = db.collection(PROFILE_COLLECTIONS.profiles);
-  const profile = await collection.findOne({ userId });
-
-  return profile || buildDefaultProfile(userId);
-};
+  return ensureUserByIdentifier(userId)
+}
 
 const updateProfileByUserId = async (userId, updates) => {
-  const db = await getDB();
-  const collection = db.collection(PROFILE_COLLECTIONS.profiles);
+  const user = await ensureUserByIdentifier(userId)
+  const payload = {}
 
-  const result = await collection.updateOne(
-    { userId },
-    {
-      $set: {
-        ...updates,
-      },
-      $setOnInsert: {
-        ...buildDefaultProfile(userId),
-      },
-    },
-    { upsert: true }
-  );
+  if (updates.name !== undefined) payload.name = updates.name.trim()
+  if (updates.email !== undefined) payload.email = updates.email.toLowerCase()
+  if (updates.country !== undefined) payload.country = updates.country
+  if (updates.role !== undefined) payload.role = updates.role
+  if (updates.premiumStatus !== undefined) payload.isPremium = updates.premiumStatus
+  if (updates.subscriptionEndDate !== undefined) payload.subscriptionEndDate = updates.subscriptionEndDate
+  if (updates.isActive !== undefined) payload.accountStatus = updates.isActive ? 'active' : 'inactive'
+  if (updates.avatarUrl !== undefined) payload.avatar = updates.avatarUrl
+  if (updates.passwordHash !== undefined) payload.password = updates.passwordHash
+
+  const updatedUser = await User.findByIdAndUpdate(user._id, payload, {
+    new: true,
+    runValidators: true,
+  })
 
   return {
     success: true,
-    modifiedCount: result.modifiedCount,
-    upsertedCount: result.upsertedCount,
-    matchedCount: result.matchedCount,
-  };
-};
+    user: updatedUser,
+  }
+}
 
 const getSettingsByUserId = async (userId) => {
-  const db = await getDB();
-  const collection = db.collection(PROFILE_COLLECTIONS.settings);
-  const settings = await collection.findOne({ userId });
+  const user = await ensureUserByIdentifier(userId)
+  let settings = await ProfileSettings.findOne({ userId: user._id }).lean()
 
-  return settings || buildDefaultSettings(userId);
-};
+  if (!settings) {
+    settings = await ProfileSettings.create(buildDefaultSettings(user._id))
+    return settings.toObject()
+  }
+
+  return settings
+}
 
 const updateSettingsByUserId = async (userId, updates) => {
-  const db = await getDB();
-  const collection = db.collection(PROFILE_COLLECTIONS.settings);
-
-  const result = await collection.updateOne(
-    { userId },
+  const user = await ensureUserByIdentifier(userId)
+  const settings = await ProfileSettings.findOneAndUpdate(
+    { userId: user._id },
     {
-      $set: {
-        ...updates,
-        updatedAt: new Date(),
-      },
-      $setOnInsert: {
-        userId,
-        createdAt: new Date(),
-      },
+      $set: updates,
+      $setOnInsert: buildDefaultSettings(user._id),
     },
-    { upsert: true }
-  );
+    { upsert: true, new: true, runValidators: true }
+  )
 
   return {
     success: true,
-    modifiedCount: result.modifiedCount,
-    upsertedCount: result.upsertedCount,
-    matchedCount: result.matchedCount,
-  };
-};
+    settings,
+  }
+}
 
 const getMailboxByUserId = async (userId) => {
-  const db = await getDB();
-  const collection = db.collection(PROFILE_COLLECTIONS.mailbox);
-  const messages = await collection.find({ userId }).sort({ timestamp: -1 }).toArray();
+  const user = await ensureUserByIdentifier(userId)
+  let messages = await MailboxMessage.find({ userId: user._id }).sort({ createdAt: -1 }).lean()
 
-  return messages.length ? messages : buildDefaultMailbox(userId);
-};
+  if (!messages.length) {
+    const inserted = await MailboxMessage.insertMany(buildDefaultMailbox(user._id))
+    messages = inserted.map((message) => message.toObject())
+  }
+
+  return messages
+}
 
 const upsertSubscriptionByUserId = async (userId, subscriptionData) => {
-  const db = await getDB();
-  const collection = db.collection(PROFILE_COLLECTIONS.profiles);
-
-  const result = await collection.updateOne(
-    { userId },
+  const user = await ensureUserByIdentifier(userId)
+  const updatedUser = await User.findByIdAndUpdate(
+    user._id,
     {
-      $set: {
-        premiumStatus: Boolean(subscriptionData.premiumStatus),
-        subscriptionEndDate: subscriptionData.subscriptionEndDate || null,
-      },
-      $setOnInsert: {
-        ...buildDefaultProfile(userId),
-      },
+      isPremium: Boolean(subscriptionData.premiumStatus),
+      subscriptionEndDate: subscriptionData.subscriptionEndDate || null,
     },
-    { upsert: true }
-  );
+    { new: true, runValidators: true }
+  )
 
   return {
     success: true,
     premiumStatus: Boolean(subscriptionData.premiumStatus),
     subscriptionEndDate: subscriptionData.subscriptionEndDate || null,
-    modifiedCount: result.modifiedCount,
-    upsertedCount: result.upsertedCount,
-  };
-};
+    user: updatedUser,
+  }
+}
 
 module.exports = {
   getProfileByUserId,
@@ -116,4 +140,4 @@ module.exports = {
   updateSettingsByUserId,
   getMailboxByUserId,
   upsertSubscriptionByUserId,
-};
+}

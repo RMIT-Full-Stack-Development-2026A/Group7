@@ -1,4 +1,4 @@
-import User from '../modules/auth/auth.model.js'
+const User = require('../modules/auth/auth.model')
 
 const bruteForce = async (req, res, next) => {
   const { identifier } = req.body
@@ -26,4 +26,4 @@ const bruteForce = async (req, res, next) => {
   }
 }
 
-export default bruteForce
+module.exports = bruteForce

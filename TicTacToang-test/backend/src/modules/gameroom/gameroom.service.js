@@ -1,5 +1,6 @@
-import { ErrorResponse } from '../../shared/errors/AppErrors.js'
-import * as gameroomRepository from './gameroom.repository.js'
+const { ErrorResponse } = require('../../shared/errors/AppErrors')
+const gameroomRepository = require('./gameroom.repository')
+const User = require('../auth/auth.model')
 
 const defaultMarkerBySize = {
   2: 'X-O',
@@ -25,9 +26,56 @@ const generateUniqueRoomId = async () => {
   return roomId
 }
 
-export const createGameroom = async (userId, roomData) => {
-  const { roomName, size, boardStyle, boardSize, marker, timeToThink } = roomData
+const buildHostPlayerFromUser = (user) => {
+  if (!user?._id) {
+    return null
+  }
+
+  return {
+    userId: String(user._id),
+    name: user.name || user.username || 'Host',
+    avatar: user.avatar || '',
+    type: 'human',
+  }
+}
+
+const ensureHostPlayerPresent = async (room) => {
+  if (!room?.host) {
+    return room
+  }
+
+  const hostUserId = String(room.host)
+  const hasHostPlayer = Array.isArray(room.players)
+    && room.players.some((player) => String(player?.userId) === hostUserId)
+
+  if (hasHostPlayer) {
+    return room
+  }
+
+  const hostUser = await User.findById(hostUserId).lean().catch(() => null)
+  const hostPlayer = buildHostPlayerFromUser(hostUser)
+
+  if (!hostPlayer) {
+    return room
+  }
+
+  room.players = [hostPlayer, ...(Array.isArray(room.players) ? room.players : [])].slice(0, room.size)
+  await room.save()
+
+  return room
+}
+
+const createGameroom = async (userId, roomData) => {
+  const { roomName, size, boardStyle, boardSize, marker, timeToThink, hostName, hostAvatar } = roomData
   const roomId = await generateUniqueRoomId()
+  const authUser = userId ? await User.findById(userId).lean().catch(() => null) : null
+
+  if (!authUser) {
+    throw new ErrorResponse('Authenticated user not found', 404)
+  }
+
+  const resolvedHostName = hostName || authUser?.name || authUser?.username
+  const resolvedHostAvatar = hostAvatar || authUser?.avatar || ''
 
   return gameroomRepository.createGameroom({
     roomId,
@@ -43,36 +91,38 @@ export const createGameroom = async (userId, roomData) => {
     players: [
       {
         userId,
-        name: 'Host',
+        name: resolvedHostName,
+        avatar: resolvedHostAvatar,
         type: 'human',
       },
     ],
   })
 }
 
-export const getAllGamerooms = async () => gameroomRepository.findAllGamerooms()
+const getAllGamerooms = async () => gameroomRepository.findAllGamerooms()
+  .then((rooms) => Promise.all(rooms.map((room) => ensureHostPlayerPresent(room))))
 
-export const getGameroomById = async (roomId) => {
+const getGameroomById = async (roomId) => {
   const room = await gameroomRepository.findByMongoId(roomId)
 
   if (!room) {
     throw new ErrorResponse('Room not found', 404)
   }
 
-  return room
+  return ensureHostPlayerPresent(room)
 }
 
-export const getGameroomByRoomId = async (roomId) => {
+const getGameroomByRoomId = async (roomId) => {
   const room = await gameroomRepository.findByRoomId(roomId)
 
   if (!room) {
     throw new ErrorResponse('Room not found', 404)
   }
 
-  return room
+  return ensureHostPlayerPresent(room)
 }
 
-export const updateGameroomSettings = async (roomId, settings) => {
+const updateGameroomSettings = async (roomId, settings) => {
   const room = await gameroomRepository.updateGameroomById(roomId, {
     gameSettings: settings,
   })
@@ -84,7 +134,7 @@ export const updateGameroomSettings = async (roomId, settings) => {
   return room
 }
 
-export const updateGameroomPlayers = async (roomId, players) => {
+const updateGameroomPlayers = async (roomId, players) => {
   const room = await getGameroomById(roomId)
 
   if (!Array.isArray(players)) {
@@ -95,14 +145,34 @@ export const updateGameroomPlayers = async (roomId, players) => {
     throw new ErrorResponse('Too many players for this room', 400)
   }
 
-  room.players = players
+  const hostUserId = room.host ? String(room.host) : null
+  let nextPlayers = Array.isArray(players) ? [...players] : []
+
+  if (hostUserId && !nextPlayers.some((player) => String(player?.userId) === hostUserId)) {
+    const hostUser = await User.findById(hostUserId).lean().catch(() => null)
+    const hostPlayer = buildHostPlayerFromUser(hostUser)
+
+    if (hostPlayer) {
+      nextPlayers = [hostPlayer, ...nextPlayers]
+    }
+  }
+
+  room.players = nextPlayers.slice(0, room.size)
   await room.save()
 
-  return room
+  return ensureHostPlayerPresent(room)
 }
 
-export const addPlayerToGameroom = async (roomId, playerData) => {
+const addPlayerToGameroom = async (roomId, playerData) => {
   const room = await getGameroomById(roomId)
+  const incomingUserId = playerData?.userId ? String(playerData.userId) : null
+
+  if (incomingUserId) {
+    const existingPlayer = room.players.find((player) => String(player.userId) === incomingUserId)
+    if (existingPlayer) {
+      return room
+    }
+  }
 
   if (room.players.length >= room.size) {
     throw new ErrorResponse('Room is full', 400)
@@ -111,10 +181,28 @@ export const addPlayerToGameroom = async (roomId, playerData) => {
   room.players.push(playerData)
   await room.save()
 
-  return room
+  return ensureHostPlayerPresent(room)
 }
 
-export const updateGameroomStatus = async (roomId, status) => {
+const removePlayerFromGameroom = async (roomId, userId) => {
+  const room = await getGameroomById(roomId)
+  const normalizedUserId = userId ? String(userId) : null
+
+  if (!normalizedUserId) {
+    throw new ErrorResponse('User id is required', 400)
+  }
+
+  if (String(room.host) === normalizedUserId) {
+    return room
+  }
+
+  room.players = (room.players || []).filter((player) => String(player?.userId) !== normalizedUserId)
+  await room.save()
+
+  return ensureHostPlayerPresent(room)
+}
+
+const updateGameroomStatus = async (roomId, status) => {
   const room = await gameroomRepository.updateGameroomById(roomId, { status })
 
   if (!room) {
@@ -124,7 +212,7 @@ export const updateGameroomStatus = async (roomId, status) => {
   return room
 }
 
-export const deleteGameroom = async (roomId) => {
+const deleteGameroom = async (roomId) => {
   const room = await gameroomRepository.deleteGameroomById(roomId)
 
   if (!room) {
@@ -132,4 +220,17 @@ export const deleteGameroom = async (roomId) => {
   }
 
   return room
+}
+
+module.exports = {
+  createGameroom,
+  getAllGamerooms,
+  getGameroomById,
+  getGameroomByRoomId,
+  updateGameroomSettings,
+  updateGameroomPlayers,
+  addPlayerToGameroom,
+  removePlayerFromGameroom,
+  updateGameroomStatus,
+  deleteGameroom,
 }

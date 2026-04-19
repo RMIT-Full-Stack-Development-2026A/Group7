@@ -1,18 +1,19 @@
-import * as gameroomService from './gameroom.service.js'
-import * as gameService from '../game/game.service.js'
-import {
+const gameroomService = require('./gameroom.service')
+const gameService = require('../game/game.service')
+const {
   toAddGameroomPlayerInput,
   toCreateGameroomInput,
   toGameroomResponse,
   toStartGameroomResponse,
   toUpdateGameroomPlayersInput,
   toUpdateGameroomSettingsInput,
-} from './gameroom.dto.js'
-import { ErrorResponse } from '../../shared/errors/AppErrors.js'
+} = require('./gameroom.dto')
+const { ErrorResponse } = require('../../shared/errors/AppErrors')
 
-export const createGameroom = async (req, res, next) => {
+const createGameroom = async (req, res, next) => {
   try {
-    const userId = req.user?.id || req.body.userId || 'anonymous_user'
+    const userId = req.user?.userId || req.user?.id || req.body.userId
+
     const room = await gameroomService.createGameroom(userId, toCreateGameroomInput(req.body))
 
     res.status(201).json({
@@ -24,7 +25,7 @@ export const createGameroom = async (req, res, next) => {
   }
 }
 
-export const getAllGamerooms = async (_req, res, next) => {
+const getAllGamerooms = async (_req, res, next) => {
   try {
     const rooms = await gameroomService.getAllGamerooms()
 
@@ -38,7 +39,7 @@ export const getAllGamerooms = async (_req, res, next) => {
   }
 }
 
-export const getGameroomById = async (req, res, next) => {
+const getGameroomById = async (req, res, next) => {
   try {
     const room = await gameroomService.getGameroomById(req.params.id)
 
@@ -51,7 +52,7 @@ export const getGameroomById = async (req, res, next) => {
   }
 }
 
-export const getGameroomByRoomId = async (req, res, next) => {
+const getGameroomByRoomId = async (req, res, next) => {
   try {
     const room = await gameroomService.getGameroomByRoomId(req.params.roomId)
 
@@ -64,7 +65,7 @@ export const getGameroomByRoomId = async (req, res, next) => {
   }
 }
 
-export const updateGameroomSettings = async (req, res, next) => {
+const updateGameroomSettings = async (req, res, next) => {
   try {
     const room = await gameroomService.updateGameroomSettings(
       req.params.id,
@@ -80,7 +81,7 @@ export const updateGameroomSettings = async (req, res, next) => {
   }
 }
 
-export const updateGameroomPlayers = async (req, res, next) => {
+const updateGameroomPlayers = async (req, res, next) => {
   try {
     const room = await gameroomService.updateGameroomPlayers(
       req.params.id,
@@ -96,7 +97,7 @@ export const updateGameroomPlayers = async (req, res, next) => {
   }
 }
 
-export const addPlayerToGameroom = async (req, res, next) => {
+const addPlayerToGameroom = async (req, res, next) => {
   try {
     const room = await gameroomService.addPlayerToGameroom(
       req.params.id,
@@ -112,12 +113,26 @@ export const addPlayerToGameroom = async (req, res, next) => {
   }
 }
 
-export const startGameroom = async (req, res, next) => {
+const removePlayerFromGameroom = async (req, res, next) => {
   try {
-    const userId = req.user?.id || req.body.userId
+    const userId = req.user?.userId || req.user?.id || req.body.userId
+    const room = await gameroomService.removePlayerFromGameroom(req.params.id, userId)
+
+    res.json({
+      ok: true,
+      data: toGameroomResponse(room),
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+const startGameroom = async (req, res, next) => {
+  try {
+    const userId = req.user?.userId || req.user?.id || req.body.userId
     const room = await gameroomService.getGameroomById(req.params.id)
 
-    if (room.host !== userId) {
+    if (String(room.host) !== String(userId)) {
       return next(new ErrorResponse('Only host can start the game', 403))
     }
 
@@ -138,15 +153,35 @@ export const startGameroom = async (req, res, next) => {
   }
 }
 
-export const deleteGameroom = async (req, res, next) => {
+const deleteGameroom = async (req, res, next) => {
   try {
-    const room = await gameroomService.deleteGameroom(req.params.id)
+    const userId = req.user?.userId || req.user?.id || req.body.userId
+    const room = await gameroomService.getGameroomById(req.params.id)
+
+    if (String(room.host) !== String(userId)) {
+      return next(new ErrorResponse('Only host can delete the room', 403))
+    }
+
+    const deletedRoom = await gameroomService.deleteGameroom(req.params.id)
 
     res.json({
       ok: true,
-      data: toGameroomResponse(room),
+      data: toGameroomResponse(deletedRoom),
     })
   } catch (error) {
     next(error)
   }
+}
+
+module.exports = {
+  createGameroom,
+  getAllGamerooms,
+  getGameroomById,
+  getGameroomByRoomId,
+  updateGameroomSettings,
+  updateGameroomPlayers,
+  addPlayerToGameroom,
+  removePlayerFromGameroom,
+  startGameroom,
+  deleteGameroom,
 }

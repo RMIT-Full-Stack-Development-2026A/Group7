@@ -1,7 +1,17 @@
-import mongoose from 'mongoose'
+const mongoose = require('mongoose')
 
 const userSchema = new mongoose.Schema(
   {
+    name: {
+      type: String,
+      required: [true, 'Name is required'],
+      trim: true,
+      minlength: [3, 'Min 3 characters'],
+      maxlength: [50, 'Max 50 characters'],
+      default: function defaultName() {
+        return this.username
+      },
+    },
     username: {
       type: String,
       required: [true, 'Username is required'],
@@ -30,7 +40,7 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['player', 'admin'],
+      enum: ['player', 'admin', 'moderator'],
       default: 'player',
     },
     accountStatus: {
@@ -38,14 +48,16 @@ const userSchema = new mongoose.Schema(
       enum: ['active', 'inactive'],
       default: 'active',
     },
-    isPremium:           { type: Boolean, default: false },
-    failedLoginAttempts: { type: Number,  default: 0 },
-    lockUntil:           { type: Date,    default: null },
-    lastLoginAt:         { type: Date,    default: null },
-    avatar:              { type: String,  default: '' },
+    isPremium: { type: Boolean, default: false },
+    subscriptionEndDate: { type: Date, default: null },
+    failedLoginAttempts: { type: Number, default: 0 },
+    lockUntil: { type: Date, default: null },
+    lastLoginAt: { type: Date, default: null },
+    avatar: { type: String, default: 'https://images.unsplash.com/photo-1772371272167-0117a6573d58?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400' },
   },
   { timestamps: true, collection: 'users' }
 )
 
 const User = mongoose.models.User || mongoose.model('User', userSchema)
-export default User
+
+module.exports = User

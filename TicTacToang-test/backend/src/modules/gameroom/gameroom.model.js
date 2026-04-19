@@ -1,4 +1,4 @@
-import mongoose from 'mongoose'
+const mongoose = require('mongoose')
 
 const validMarkers = [
   'X-O',
@@ -46,6 +46,7 @@ const gameroomSchema = new mongoose.Schema(
       {
         userId: String,
         name: String,
+        avatar: String,
         type: {
           type: String,
           enum: ['human', 'ai'],
@@ -84,8 +85,8 @@ const gameroomSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['pending', 'ready', 'started', 'completed'],
-      default: 'pending',
+      enum: ['available', 'full', 'in-battle', 'completed'],
+      default: 'available',
     },
   },
   { timestamps: true, collection: 'gameroom' }
@@ -93,4 +94,4 @@ const gameroomSchema = new mongoose.Schema(
 
 const Gameroom = mongoose.models.Room || mongoose.model('Room', gameroomSchema)
 
-export default Gameroom
+module.exports = Gameroom

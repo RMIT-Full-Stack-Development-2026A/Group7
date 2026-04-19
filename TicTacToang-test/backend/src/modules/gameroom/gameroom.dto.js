@@ -1,5 +1,5 @@
-export const toCreateGameroomInput = (body = {}) => {
-  const { roomName, size, boardStyle, boardSize, marker, timeToThink } = body
+const toCreateGameroomInput = (body = {}) => {
+  const { roomName, size, boardStyle, boardSize, marker, timeToThink, userId, hostName, hostAvatar } = body
 
   return {
     roomName,
@@ -8,18 +8,30 @@ export const toCreateGameroomInput = (body = {}) => {
     boardSize,
     marker,
     timeToThink,
+    userId,
+    hostName,
+    hostAvatar,
   }
 }
 
-export const toUpdateGameroomSettingsInput = (body = {}) => body.gameSettings
+const toUpdateGameroomSettingsInput = (body = {}) => body.gameSettings
 
-export const toUpdateGameroomPlayersInput = (body = {}) => body.players
+const toUpdateGameroomPlayersInput = (body = {}) => body.players
 
-export const toAddGameroomPlayerInput = (body = {}) => body.playerData
+const toAddGameroomPlayerInput = (body = {}) => body.playerData
 
-export const toGameroomResponse = (room) => room
+const toGameroomResponse = (room) => room
 
-export const toStartGameroomResponse = ({ room, gameSession }) => ({
+const toStartGameroomResponse = ({ room, gameSession }) => ({
   room,
   gameSession,
 })
+
+module.exports = {
+  toCreateGameroomInput,
+  toUpdateGameroomSettingsInput,
+  toUpdateGameroomPlayersInput,
+  toAddGameroomPlayerInput,
+  toGameroomResponse,
+  toStartGameroomResponse,
+}

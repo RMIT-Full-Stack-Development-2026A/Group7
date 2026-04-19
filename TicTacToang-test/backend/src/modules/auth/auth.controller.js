@@ -1,7 +1,7 @@
-import * as authService from './auth.service.js'
-import { validateRegisterInput, validateLoginInput } from './auth.validator.js'
+const authService = require('./auth.service')
+const { validateRegisterInput, validateLoginInput } = require('./auth.validator')
 
-export const getAllUsers = async (_, res, next) => {
+const getAllUsers = async (_, res, next) => {
   try {
     const users = await authService.getAllUsers()
     return res.status(200).json(users)
@@ -10,20 +10,20 @@ export const getAllUsers = async (_, res, next) => {
   }
 }
 
-export const register = async (req, res, next) => {
+const register = async (req, res, next) => {
   try {
     const { isValid, errors } = validateRegisterInput(req.body)
     if (!isValid) return res.status(400).json({ message: 'Validation failed.', errors })
 
-    const { username, email, password, country } = req.body
-    const user = await authService.register({ username, email, password, country })
+    const { name, username, email, password, country } = req.body
+    const user = await authService.register({ name, username, email, password, country })
     return res.status(201).json({ message: 'Account created successfully.', user })
   } catch (err) {
     next(err)
   }
 }
 
-export const login = async (req, res, next) => {
+const login = async (req, res, next) => {
   try {
     const { isValid, errors } = validateLoginInput(req.body)
     if (!isValid) return res.status(400).json({ message: 'Validation failed.', errors })
@@ -34,4 +34,10 @@ export const login = async (req, res, next) => {
   } catch (err) {
     next(err)
   }
+}
+
+module.exports = {
+  getAllUsers,
+  register,
+  login,
 }

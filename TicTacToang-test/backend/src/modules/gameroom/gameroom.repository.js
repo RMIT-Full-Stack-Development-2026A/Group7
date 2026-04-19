@@ -1,18 +1,27 @@
-import Gameroom from './gameroom.model.js'
+const Gameroom = require('./gameroom.model')
 
-export const findAllGamerooms = () => Gameroom.find().sort({ updatedAt: -1 })
+const findAllGamerooms = () => Gameroom.find().sort({ updatedAt: -1 })
 
-export const findByMongoId = (id) => Gameroom.findById(id)
+const findByMongoId = (id) => Gameroom.findById(id)
 
-export const findByRoomId = (roomId) => Gameroom.findOne({ roomId })
+const findByRoomId = (roomId) => Gameroom.findOne({ roomId })
 
-export const createGameroom = (roomData) => Gameroom.create(roomData)
+const createGameroom = (roomData) => Gameroom.create(roomData)
 
-export const updateGameroomById = (id, update, options = {}) =>
+const updateGameroomById = (id, update, options = {}) =>
   Gameroom.findByIdAndUpdate(id, update, {
     new: true,
     runValidators: true,
     ...options,
   })
 
-export const deleteGameroomById = (id) => Gameroom.findByIdAndDelete(id)
+const deleteGameroomById = (id) => Gameroom.findByIdAndDelete(id)
+
+module.exports = {
+  findAllGamerooms,
+  findByMongoId,
+  findByRoomId,
+  createGameroom,
+  updateGameroomById,
+  deleteGameroomById,
+}

@@ -1,10 +1,18 @@
-export const validateRegisterInput = ({ username, email, password, country }) => {
+const validateRegisterInput = ({ name, username, email, password, country }) => {
   const errors = {}
+
+  if (name !== undefined) {
+    if (typeof name !== 'string') {
+      errors.name = 'Name must be a string.'
+    } else if (name.trim().length < 3 || name.trim().length > 50) {
+      errors.name = 'Name must be 3-50 characters.'
+    }
+  }
 
   if (!username) {
     errors.username = 'Username is required.'
   } else if (username.length < 3 || username.length > 30) {
-    errors.username = 'Username must be 3–30 characters.'
+    errors.username = 'Username must be 3-30 characters.'
   } else if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
     errors.username = 'Only letters, numbers, _ and - allowed.'
   }
@@ -17,7 +25,7 @@ export const validateRegisterInput = ({ username, email, password, country }) =>
     errors.email = 'Email contains prohibited characters.'
   } else {
     const parts = email.split('@')
-    if (parts.length !== 2)          errors.email = 'Must contain exactly one @.'
+    if (parts.length !== 2) errors.email = 'Must contain exactly one @.'
     else if (!parts[1].includes('.')) errors.email = 'Must contain a dot after @.'
   }
 
@@ -38,9 +46,14 @@ export const validateRegisterInput = ({ username, email, password, country }) =>
   return { isValid: Object.keys(errors).length === 0, errors }
 }
 
-export const validateLoginInput = ({ identifier, password }) => {
+const validateLoginInput = ({ identifier, password }) => {
   const errors = {}
   if (!identifier?.trim()) errors.identifier = 'Username or email is required.'
-  if (!password)            errors.password   = 'Password is required.'
+  if (!password) errors.password = 'Password is required.'
   return { isValid: Object.keys(errors).length === 0, errors }
+}
+
+module.exports = {
+  validateRegisterInput,
+  validateLoginInput,
 }

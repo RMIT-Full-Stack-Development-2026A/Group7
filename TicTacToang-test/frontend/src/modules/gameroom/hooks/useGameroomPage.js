@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { initialPlayers } from '../components/RoomLayout/FourPeople.jsx';
 import { gameroomService } from '../services/gameroomService.js';
+import { getStoredAuthIdentity, resolveAuthIdentity } from '../utils/authIdentity.js';
+import ROUTES from '../../../router/routes.config.js';
 
-const HOST_AVATAR =
-  'https://images.unsplash.com/photo-1772371272167-0117a6573d58?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400';
 const AI_AVATAR =
   'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRdDSVVP_wL7wjVO9MdHRFNITzjGa_LYBJNgA&s';
 
@@ -55,23 +54,33 @@ const buildEmptyPlayers = () => [null, null, null, null];
 
 const mapRoomPlayersToSlots = (room) => {
   const nextPlayers = buildEmptyPlayers();
-  const activeSlots = getActiveSlotIndices(room.size);
+  const activeSlots = getActiveSlotIndices(Number(room?.size) || 4);
+  const roomPlayers = Array.isArray(room?.players) ? room.players : [];
+  const hostUserId = room?.host ? String(room.host) : null;
 
-  room.players.forEach((player, index) => {
+  const hostPlayer = hostUserId
+    ? roomPlayers.find((player) => String(player?.userId) === hostUserId)
+    : null;
+  const guestPlayers = roomPlayers.filter((player) => String(player?.userId) !== hostUserId);
+  const orderedPlayers = hostPlayer ? [hostPlayer, ...guestPlayers] : roomPlayers;
+
+  orderedPlayers.forEach((player, index) => {
     const slotIndex = activeSlots[index];
 
     if (slotIndex === undefined) {
       return;
     }
 
+    const isHostPlayer = hostUserId && String(player?.userId) === hostUserId;
+
     nextPlayers[slotIndex] = {
       id: slotIndex + 1,
-      name: player.name || `p${slotIndex + 1}`,
-      avatar: player.type === 'ai' ? AI_AVATAR : HOST_AVATAR,
-      isHost: index === 0,
+      name: player?.name || (isHostPlayer ? 'Host' : `p${slotIndex + 1}`),
+      avatar: player?.avatar || (player?.type === 'ai' ? AI_AVATAR : ''),
+      isHost: Boolean(isHostPlayer),
       type: player.type || 'human',
       aiDifficulty: player.aiDifficulty,
-      userId: player.userId,
+      userId: player?.userId,
     };
   });
 
@@ -79,19 +88,25 @@ const mapRoomPlayersToSlots = (room) => {
 };
 
 const mapSlotsToRoomPlayers = (players, room) => {
-  const activeSlots = getActiveSlotIndices(room.size);
+  const activeSlots = getActiveSlotIndices(Number(room?.size) || 4);
+  const hostUserId = room?.host ? String(room.host) : null;
 
   return activeSlots
-    .map((slotIndex, position) => {
+    .map((slotIndex) => {
       const player = players[slotIndex];
 
       if (!player) {
         return null;
       }
 
+      const isHostPlayer = Boolean(
+        (player.userId && hostUserId && String(player.userId) === hostUserId) || player.isHost
+      );
+
       return {
-        userId: player.userId || (player.type === 'ai' ? `ai_slot_${slotIndex + 1}` : room.host),
-        name: player.name || (position === 0 ? 'Host' : `p${slotIndex + 1}`),
+        userId: player.userId || (player.type === 'ai' ? `ai_slot_${slotIndex + 1}` : (isHostPlayer ? room.host : null)),
+        name: player.name || (isHostPlayer ? 'Host' : `p${slotIndex + 1}`),
+        avatar: player.avatar || (player.type === 'ai' ? AI_AVATAR : ''),
         type: player.type || 'human',
         ...(player.aiDifficulty ? { aiDifficulty: player.aiDifficulty } : {}),
       };
@@ -103,6 +118,7 @@ const normalizeRoomPlayersForSync = (players = []) =>
   players.map((player) => ({
     userId: player.userId,
     name: player.name,
+    avatar: player.avatar,
     type: player.type || 'human',
     ...(player.aiDifficulty ? { aiDifficulty: player.aiDifficulty } : {}),
   }));
@@ -110,16 +126,44 @@ const normalizeRoomPlayersForSync = (players = []) =>
 export function useGameroomPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const [authIdentity, setAuthIdentity] = useState(getStoredAuthIdentity);
   const [roomSize, setRoomSize] = useState(4);
-  const [players, setPlayers] = useState(initialPlayers);
+  const [players, setPlayers] = useState(buildEmptyPlayers);
   const [roomData, setRoomData] = useState(null);
   const [messages, setMessages] = useState([]);
   const [friends] = useState(DEFAULT_FRIENDS);
+  const [returnToRoute, setReturnToRoute] = useState(location.state?.returnTo || '/createroom');
+  const [hasHydratedRoomPlayers, setHasHydratedRoomPlayers] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const hydrateAuthIdentity = async () => {
+      const resolvedIdentity = await resolveAuthIdentity();
+
+      if (!isMounted) {
+        return;
+      }
+
+      setAuthIdentity(resolvedIdentity);
+    };
+
+    hydrateAuthIdentity();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleCreateRoom = (room) => {
+    if (!room) {
+      return;
+    }
+
     setRoomData(room);
-    setRoomSize(room.size);
-    setPlayers(mapRoomPlayersToSlots(room));
+    setRoomSize(Number(room.size) || 4);
+    setPlayers(mapRoomPlayersToSlots(room, authIdentity));
+    setHasHydratedRoomPlayers(true);
   };
 
   const handleAddAI = (slotIndex, difficulty) => {
@@ -152,11 +196,17 @@ export function useGameroomPage() {
   };
 
   const resetRoom = () => {
-    setPlayers(initialPlayers);
+    setPlayers(buildEmptyPlayers());
+    setHasHydratedRoomPlayers(false);
   };
 
   useEffect(() => {
     const createdRoom = location.state?.createdRoom;
+    const nextReturnToRoute = location.state?.returnTo;
+
+    if (nextReturnToRoute) {
+      setReturnToRoute(nextReturnToRoute);
+    }
 
     if (createdRoom && !roomData) {
       handleCreateRoom(createdRoom);
@@ -171,10 +221,15 @@ export function useGameroomPage() {
     }
 
     setPlayers(mapRoomPlayersToSlots(roomData));
-  }, [roomData, roomSize]);
+    setHasHydratedRoomPlayers(true);
+  }, [authIdentity, roomData, roomSize]);
 
   useEffect(() => {
-    if (!roomData?._id) {
+    if (!roomData?._id || !hasHydratedRoomPlayers) {
+      return;
+    }
+
+    if (!authIdentity?.userId || String(authIdentity.userId) !== String(roomData.host)) {
       return;
     }
 
@@ -205,7 +260,7 @@ export function useGameroomPage() {
     };
 
     syncPlayers();
-  }, [players, roomData]);
+  }, [authIdentity, hasHydratedRoomPlayers, players, roomData]);
 
   const handleSendMessage = (message) => {
     setMessages((prevMessages) => [
@@ -227,17 +282,37 @@ export function useGameroomPage() {
     console.log('Starting game...');
   };
 
-  const handleBack = () => {
+  const handleBack = async () => {
+    if (roomData?._id && !isCurrentUserHost) {
+      try {
+        await gameroomService.removeCurrentPlayerFromRoom(roomData._id);
+      } catch (error) {
+        console.error('Error leaving room:', error);
+      }
+    }
+
     setRoomData(null);
     setRoomSize(4);
     setMessages([]);
     resetRoom();
-    navigate('/createroom');
+    navigate(returnToRoute);
   };
 
   const handleSettings = () => {
-    console.log('Opening settings...');
+    navigate(ROUTES.SETTINGS, {
+      state: {
+        returnTo: location.pathname,
+        returnState: {
+          createdRoom: roomData,
+          returnTo: returnToRoute,
+        },
+      },
+    });
   };
+
+  const isCurrentUserHost = Boolean(
+    authIdentity?.userId && roomData?.host && String(authIdentity.userId) === String(roomData.host)
+  );
 
   return {
     roomSize,
@@ -245,6 +320,7 @@ export function useGameroomPage() {
     roomData,
     messages,
     friends,
+    isCurrentUserHost,
     handleCreateRoom,
     handleAddAI,
     handleRemoveAI,

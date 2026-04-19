@@ -1,4 +1,4 @@
-import mongoose from 'mongoose'
+const mongoose = require('mongoose')
 
 const gameSchema = new mongoose.Schema(
   {
@@ -38,4 +38,4 @@ const gameSchema = new mongoose.Schema(
 
 const Game = mongoose.models.GameSession || mongoose.model('GameSession', gameSchema)
 
-export default Game
+module.exports = Game

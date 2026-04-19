@@ -1,12 +1,12 @@
-import bcrypt from 'bcryptjs'
-import jwt    from 'jsonwebtoken'
-import * as repo from './auth.repository.js'
-import { registerResponseDTO, loginResponseDTO } from './auth.dto.js'
+const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
+const repo = require('./auth.repository')
+const { registerResponseDTO, loginResponseDTO } = require('./auth.dto')
 
-export const getAllUsers = async () =>
+const getAllUsers = async () =>
   repo.findAllUsers()
 
-export const register = async ({ username, email, password, country }) => {
+const register = async ({ name, username, email, password, country }) => {
   if (await repo.findByEmail(email)) {
     const err = new Error('Email already exists.')
     err.statusCode = 409
@@ -19,11 +19,17 @@ export const register = async ({ username, email, password, country }) => {
   }
 
   const hashed = await bcrypt.hash(password, 12)
-  const user   = await repo.createUser({ username, email, password: hashed, country })
+  const user = await repo.createUser({
+    name: name?.trim() || username.trim(),
+    username,
+    email,
+    password: hashed,
+    country,
+  })
   return registerResponseDTO(user)
 }
 
-export const login = async (identifier, password) => {
+const login = async (identifier, password) => {
   const user = await repo.findByEmailOrUsername(identifier)
   if (!user) {
     const err = new Error('Invalid username/email or password.')
@@ -72,4 +78,10 @@ export const login = async (identifier, password) => {
   )
 
   return loginResponseDTO(user, token)
+}
+
+module.exports = {
+  getAllUsers,
+  register,
+  login,
 }

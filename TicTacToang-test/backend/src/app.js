@@ -1,8 +1,10 @@
-import express from 'express'
-import cors from 'cors'
-import errorMiddleware from './middleware/errorMiddleware.js'
-import authRoutes from './modules/auth/auth.routes.js'
-import gameroomRoutes from './modules/gameroom/gameroom.routes.js'
+const express = require('express')
+const cors = require('cors')
+const errorMiddleware = require('./middleware/errorMiddleware')
+const authRoutes = require('./modules/auth/auth.routes')
+const gameroomRoutes = require('./modules/gameroom/gameroom.routes')
+const profileRoutes = require('./modules/profile/profile.routes')
+const startingPageRoutes = require('./modules/starting-page/starting-page.routes')
 
 const app = express()
 
@@ -25,6 +27,9 @@ app.use(express.urlencoded({ extended: true }))
 app.use('/api/users', authRoutes)
 app.use('/api/auth', authRoutes)
 app.use('/api/gameroom', gameroomRoutes)
+app.use('/api/profile', profileRoutes)
+app.use('/api/starting-page', startingPageRoutes)
+app.use('/api/startingpage', startingPageRoutes)
 
 app.get('/api/health', (_, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
@@ -36,4 +41,4 @@ app.use((req, res) => {
 
 app.use(errorMiddleware)
 
-export default app
+module.exports = app

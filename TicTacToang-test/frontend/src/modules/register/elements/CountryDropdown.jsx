@@ -1,4 +1,4 @@
-const COUNTRIES = [
+export const COUNTRIES = [
   'Vietnam', 'United States', 'United Kingdom', 'Australia', 'Canada',
   'France', 'Germany', 'Japan', 'South Korea', 'China', 'Singapore',
   'Thailand', 'Malaysia', 'Indonesia', 'Philippines', 'India', 'Brazil',

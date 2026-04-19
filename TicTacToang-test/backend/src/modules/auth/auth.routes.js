@@ -1,11 +1,11 @@
-import { Router }    from 'express'
-import * as ctrl     from './auth.controller.js'
-import bruteForce    from '../../middleware/bruteForce.js'
+const express = require('express')
+const ctrl = require('./auth.controller')
+const bruteForce = require('../../middleware/bruteForce')
 
-const router = Router()
+const router = express.Router()
 
 router.get('/', ctrl.getAllUsers)
 router.post('/register', ctrl.register)
-router.post('/login',    bruteForce, ctrl.login)
+router.post('/login', bruteForce, ctrl.login)
 
-export default router
+module.exports = router

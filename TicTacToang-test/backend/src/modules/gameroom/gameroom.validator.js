@@ -1,4 +1,4 @@
-import { ErrorResponse } from '../../shared/errors/AppErrors.js'
+const { ErrorResponse } = require('../../shared/errors/AppErrors')
 
 const validMarkers = [
   'X-O',
@@ -27,17 +27,17 @@ const validRoomSizes = [2, 3, 4]
 const validDifficulties = ['Easy', 'Medium', 'Hard']
 const validRoomStatuses = ['pending', 'ready', 'started', 'completed']
 
-export const validateRoomSize = (size) => validRoomSizes.includes(size)
+const validateRoomSize = (size) => validRoomSizes.includes(size)
 
-export const validateTimeToThink = (time) =>
+const validateTimeToThink = (time) =>
   typeof time === 'number' && time >= 60 && time <= 120
 
-export const validateRoomName = (name) =>
+const validateRoomName = (name) =>
   typeof name === 'string' && name.trim().length > 0 && name.length <= 50
 
-export const validateAIDifficulty = (difficulty) => validDifficulties.includes(difficulty)
+const validateAIDifficulty = (difficulty) => validDifficulties.includes(difficulty)
 
-export const validateRoomStatus = (status) => validRoomStatuses.includes(status)
+const validateRoomStatus = (status) => validRoomStatuses.includes(status)
 
 const assertCreateGameroomRequest = (body = {}) => {
   const { roomName, size, boardStyle, boardSize, marker, timeToThink } = body
@@ -88,5 +88,15 @@ const buildValidator = (validatorFn) => (req, _res, next) => {
   }
 }
 
-export const validateCreateGameroomRequest = buildValidator(assertCreateGameroomRequest)
-export const validateUpdateGameroomSettingsRequest = buildValidator(assertUpdateGameroomSettingsRequest)
+const validateCreateGameroomRequest = buildValidator(assertCreateGameroomRequest)
+const validateUpdateGameroomSettingsRequest = buildValidator(assertUpdateGameroomSettingsRequest)
+
+module.exports = {
+  validateRoomSize,
+  validateTimeToThink,
+  validateRoomName,
+  validateAIDifficulty,
+  validateRoomStatus,
+  validateCreateGameroomRequest,
+  validateUpdateGameroomSettingsRequest,
+}

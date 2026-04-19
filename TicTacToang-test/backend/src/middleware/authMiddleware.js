@@ -1,18 +1,21 @@
-import jwt from 'jsonwebtoken'
+const jwt = require('jsonwebtoken')
 
-export const authenticate = (req, res, next) => {
-  const authHeader = req.headers.authorization
-  if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'No token provided.' })
+const authenticate = (req, res, next) => {
+  const authHeader = req.headers.authorization || ''
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
+
+  if (!token) {
+    return res.status(401).json({ message: 'Authentication required.' })
   }
+
   try {
-    const token  = authHeader.split(' ')[1]
     req.user = jwt.verify(token, process.env.JWT_SECRET)
     next()
-  } catch (err) {
-    const msg = err.name === 'TokenExpiredError'
-      ? 'Session expired. Please login again.'
-      : 'Invalid token.'
-    return res.status(401).json({ message: msg })
+  } catch (error) {
+    return res.status(401).json({ message: 'Invalid or expired token.' })
   }
+}
+
+module.exports = {
+  authenticate,
 }

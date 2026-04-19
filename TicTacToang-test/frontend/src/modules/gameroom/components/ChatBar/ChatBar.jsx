@@ -29,7 +29,7 @@ export function ChatBar({ messages, onSendMessage }) {
                 <button type="submit"
                         disabled={!canSend}
                         className="btn btn-send">
-                    <i className="bi bi-send-fill" style={{fontSize: '1.25rem'}}> </i>    
+                    <i className="bi bi-send-fill btn-send-icon"> </i>    
                 </button>
             </form>
         </div>

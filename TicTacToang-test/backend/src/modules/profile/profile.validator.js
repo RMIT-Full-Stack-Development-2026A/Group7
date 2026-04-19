@@ -30,8 +30,15 @@ const validateUserId = (userId) => {
 const validateProfileUpdateDto = (payload = {}) => {
   const dto = ensureObject(payload);
 
-  if (dto.username !== undefined && typeof dto.username !== 'string') {
-    throw createValidationError('username must be a string.');
+  if (dto.name !== undefined) {
+    if (typeof dto.name !== 'string') {
+      throw createValidationError('name must be a string.');
+    }
+
+    const trimmedName = dto.name.trim();
+    if (trimmedName.length < 3 || trimmedName.length > 50) {
+      throw createValidationError('name must be 3-50 characters.');
+    }
   }
 
   if (dto.email !== undefined && (typeof dto.email !== 'string' || !EMAIL_PATTERN.test(dto.email))) {

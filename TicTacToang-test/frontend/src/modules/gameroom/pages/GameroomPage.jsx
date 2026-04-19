@@ -18,6 +18,7 @@ function GameroomPage() {
     roomData,
     messages,
     friends,
+    isCurrentUserHost,
     handleCreateRoom,
     handleAddAI,
     handleRemoveAI,
@@ -27,6 +28,8 @@ function GameroomPage() {
     handleBack,
     handleSettings,
   } = useGameroomPage();
+
+  const hasValidRoom = Boolean(roomData && Array.isArray(roomData.players));
 
   const handleSize = () => {
     if (roomSize === 4) {
@@ -46,7 +49,7 @@ function GameroomPage() {
     return null;
   };
 
-  if (!roomData) {
+  if (!hasValidRoom) {
     return <CreateRoomPage onCreateRoom={handleCreateRoom} />;
   }
 
@@ -69,11 +72,13 @@ function GameroomPage() {
 
         <ChatBar messages={messages} onSendMessage={handleSendMessage} />
 
-        <StartGameButton
-          isHost={true}
-          disabled={false}
-          onClick={handleStartGame}
-        />
+        {isCurrentUserHost ? (
+          <StartGameButton
+            isHost={true}
+            disabled={false}
+            onClick={handleStartGame}
+          />
+        ) : null}
 
         <FriendList friends={friends} onInvite={handleInvite} />
       </div>

@@ -58,6 +58,31 @@ body {
   width: 100%;
 }
 
+body[data-app-theme='light'] {
+  --text: #5f6c86;
+  --text-h: #1f2937;
+  --bg: #edf3ff;
+  --border: #cfd9ff;
+  --code-bg: #f4f7ff;
+  --accent: #7c5cff;
+  --accent-bg: rgba(124, 92, 255, 0.12);
+  --accent-border: rgba(124, 92, 255, 0.28);
+  --social-bg: rgba(255, 255, 255, 0.72);
+  --shadow: rgba(128, 148, 225, 0.12) 0 14px 30px -8px, rgba(128, 148, 225, 0.1) 0 6px 14px -8px;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(164, 195, 255, 0.22), transparent 22%),
+    radial-gradient(circle at 84% 12%, rgba(204, 176, 255, 0.22), transparent 24%),
+    linear-gradient(180deg, #eef3ff 0%, #e7edff 48%, #eef0ff 100%);
+}
+
+body[data-app-theme='dark'] {
+  background:
+    radial-gradient(circle at 18% 18%, rgba(94, 209, 255, 0.09), transparent 22%),
+    radial-gradient(circle at 50% 38%, rgba(122, 162, 255, 0.12), transparent 28%),
+    radial-gradient(circle at 82% 18%, rgba(156, 108, 255, 0.16), transparent 26%),
+    linear-gradient(135deg, #071120 0%, #111938 48%, #24195a 100%);
+}
+
 #root {
   width: 100%;
   min-height: 100svh;
@@ -67,7 +92,7 @@ body {
 }
 
 
-#root:not(:has(.reg-page)):not(:has(.login-page)):not(:has(.game-setup-container)):not(:has(.game-room-bg)) {
+#root:not(:has(.reg-page)):not(:has(.login-page)):not(:has(.game-setup-container)):not(:has(.game-room-bg)):not(:has(.neon-page)):not(:has(.full-bleed-page)) {
   width: 1126px;
   max-width: 100%;
   margin: 0 auto;

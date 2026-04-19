@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { gameroomService } from '../services/gameroomService.js';
+import { resolveAuthIdentity } from '../utils/authIdentity.js';
 
 const MARKER_OPTIONS_BY_PLAYERS = {
   2: [
@@ -61,8 +62,13 @@ export function useRoomSettingsForm(onCreateRoom) {
     setIsLoading(true);
 
     try {
-      const storedUser = localStorage.getItem('authUser');
-      const authUser = storedUser ? JSON.parse(storedUser) : null;
+      const { userId, username, name, avatar } = await resolveAuthIdentity();
+      const displayName = name || username;
+
+      if (!userId || !username) {
+        throw new Error('Please log in again before creating a room.');
+      }
+
       const createdRoom = await gameroomService.createRoom({
         roomName,
         size: players,
@@ -70,7 +76,9 @@ export function useRoomSettingsForm(onCreateRoom) {
         boardSize,
         marker,
         timeToThink,
-        userId: authUser?.id || 'anonymous_user',
+        userId,
+        hostName: displayName,
+        hostAvatar: avatar,
       });
 
       onCreateRoom(createdRoom);

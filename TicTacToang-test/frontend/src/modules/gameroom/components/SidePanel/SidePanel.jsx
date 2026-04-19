@@ -2,10 +2,10 @@ export function FriendList({friends, onInvite}) {
     return(
         <div className="friend-list-panel">
             <div className="friend-list-header">
-                <h3 style={{fontSize: '0.875rem', fontWeight: 500, color: 'white', margin: 0 }}> 
+                <h3 className="friend-list-title"> 
                     Friends Online
                 </h3>
-                <p style={{fontSize: '0.75rem', color: '#9ca3af', margin: '4px 0 0'}}>
+                <p className="friend-list-summary">
                     {friends.filter(f => f.isOnline).length} of {friends.length} online
                 </p>
             </div>
