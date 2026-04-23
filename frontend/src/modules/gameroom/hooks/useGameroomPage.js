@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { gameroomService } from '../services/gameroomService.js';
 import { getStoredAuthIdentity, resolveAuthIdentity } from '../utils/authIdentity.js';
@@ -210,7 +210,7 @@ export function useGameroomPage() {
     };
   }, []);
 
-  const handleCreateRoom = (room) => {
+  const handleCreateRoom = useCallback((room) => {
     if (!room) {
       return;
     }
@@ -219,7 +219,7 @@ export function useGameroomPage() {
     setRoomSize(Number(room.size) || 4);
     setPlayers(mapRoomPlayersToSlots(room, authIdentity));
     setHasHydratedRoomPlayers(true);
-  };
+  }, [authIdentity]);
 
   const handleAddAI = (slotIndex, difficulty) => {
     setPlayers((currentPlayers) => {
@@ -250,34 +250,41 @@ export function useGameroomPage() {
     });
   };
 
-  const resetRoom = () => {
+  const resetRoom = useCallback(() => {
     setPlayers(buildEmptyPlayers());
     setHasHydratedRoomPlayers(false);
-  };
+  }, []);
 
   useEffect(() => {
     const createdRoom = location.state?.createdRoom;
     const nextReturnToRoute = location.state?.returnTo;
+    const timer = window.setTimeout(() => {
+      if (nextReturnToRoute) {
+        setReturnToRoute(nextReturnToRoute);
+      }
 
-    if (nextReturnToRoute) {
-      setReturnToRoute(nextReturnToRoute);
-    }
+      if (createdRoom && !roomData) {
+        handleCreateRoom(createdRoom);
+        navigate(location.pathname, { replace: true, state: null });
+      }
+    }, 0);
 
-    if (createdRoom && !roomData) {
-      handleCreateRoom(createdRoom);
-      navigate(location.pathname, { replace: true, state: null });
-    }
-  }, [location.pathname, location.state, navigate, roomData]);
+    return () => window.clearTimeout(timer);
+  }, [handleCreateRoom, location.pathname, location.state, navigate, roomData]);
 
   useEffect(() => {
-    if (!roomData) {
-      resetRoom();
-      return;
-    }
+    const timer = window.setTimeout(() => {
+      if (!roomData) {
+        resetRoom();
+        return;
+      }
 
-    setPlayers(mapRoomPlayersToSlots(roomData, authIdentity));
-    setHasHydratedRoomPlayers(true);
-  }, [authIdentity, roomData, roomSize]);
+      setPlayers(mapRoomPlayersToSlots(roomData, authIdentity));
+      setHasHydratedRoomPlayers(true);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [authIdentity, resetRoom, roomData, roomSize]);
 
   useEffect(() => {
     if (!roomData?._id || !hasHydratedRoomPlayers) {
@@ -295,15 +302,6 @@ export function useGameroomPage() {
     if (currentRoomPlayers === nextPlayersJson) {
       return;
     }
-
-    setRoomData((prevRoom) => (
-      prevRoom
-        ? {
-            ...prevRoom,
-            players: nextRoomPlayers,
-          }
-        : prevRoom
-    ));
 
     const syncPlayers = async () => {
       try {

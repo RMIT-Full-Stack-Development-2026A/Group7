@@ -1,5 +1,5 @@
 const toCreateGameroomInput = (body = {}) => {
-  const { roomName, size, boardStyle, boardSize, marker, timeToThink, userId, hostName, hostAvatar } = body
+  const { roomName, size, boardStyle, boardSize, marker, timeToThink, userId, username, email, hostName, hostAvatar } = body
 
   return {
     roomName,
@@ -9,6 +9,8 @@ const toCreateGameroomInput = (body = {}) => {
     marker,
     timeToThink,
     userId,
+    username,
+    email,
     hostName,
     hostAvatar,
   }

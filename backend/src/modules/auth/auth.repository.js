@@ -1,7 +1,10 @@
 const User = require('./auth.model')
 
 const findAllUsers = () =>
-  User.find().sort({ createdAt: -1 }).lean()
+  User.find()
+    .select('-password -failedLoginAttempts -lockUntil')
+    .sort({ createdAt: -1 })
+    .lean()
 
 const findByEmail = (email) =>
   User.findOne({ email: email.toLowerCase().trim() })

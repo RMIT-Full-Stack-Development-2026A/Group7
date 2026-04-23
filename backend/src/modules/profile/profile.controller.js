@@ -1,6 +1,6 @@
 const profileService = require('./profile.service')
 
-const resolveUserId = (req) => req.query.userId || req.body.userId || req.user?.userId || req.user?.id || 'TheOneWhoAsked'
+const resolveUserId = (req) => req.query.userId || req.body.userId || req.user?.userId || req.user?.id || 'admin'
 const getStatusCode = (error) => error.statusCode || 500
 
 const getProfile = async (req, res) => {

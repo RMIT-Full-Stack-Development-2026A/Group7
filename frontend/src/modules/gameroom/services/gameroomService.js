@@ -1,4 +1,5 @@
 import gameroomApi from '../../../config/api/gameroom.api.js';
+import { getStoredAuthIdentity } from '../utils/authIdentity.js';
 
 const defaultGameSettings = {
   boardStyle: 'Classic',
@@ -18,6 +19,17 @@ const buildJsonRequest = (method, body) => {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     ...(body ? { body: JSON.stringify(body) } : {}),
+  };
+};
+
+const withCurrentUser = (body = {}) => {
+  const identity = getStoredAuthIdentity();
+
+  return {
+    ...body,
+    userId: body.userId || identity.userId || undefined,
+    username: body.username || identity.username || undefined,
+    email: body.email || identity.email || undefined,
   };
 };
 
@@ -55,7 +67,7 @@ export const gameroomService = {
   async createRoom(roomData) {
     const room = await fetch(
       gameroomApi.rooms,
-      buildJsonRequest('POST', roomData),
+      buildJsonRequest('POST', withCurrentUser(roomData)),
     ).then(parseJsonResponse);
 
     return normalizeRoomPayload(room);
@@ -74,7 +86,7 @@ export const gameroomService = {
   async updateRoomPlayers(roomId, players) {
     const room = await fetch(
       gameroomApi.roomPlayers(roomId),
-      buildJsonRequest('PATCH', { players }),
+      buildJsonRequest('PATCH', withCurrentUser({ players })),
     ).then(parseJsonResponse);
 
     return normalizeRoomPayload(room);
@@ -83,7 +95,7 @@ export const gameroomService = {
   async addPlayerToRoom(roomId, playerData) {
     const room = await fetch(
       gameroomApi.roomPlayer(roomId),
-      buildJsonRequest('POST', { playerData }),
+      buildJsonRequest('POST', withCurrentUser({ playerData })),
     ).then(parseJsonResponse);
 
     return normalizeRoomPayload(room);
@@ -92,7 +104,7 @@ export const gameroomService = {
   async removeCurrentPlayerFromRoom(roomId) {
     const room = await fetch(
       gameroomApi.roomPlayer(roomId),
-      buildJsonRequest('DELETE'),
+      buildJsonRequest('DELETE', withCurrentUser()),
     ).then(parseJsonResponse);
 
     return normalizeRoomPayload(room);
@@ -101,7 +113,7 @@ export const gameroomService = {
   async updateRoomSettings(roomId, gameSettings) {
     const room = await fetch(
       gameroomApi.roomSettings(roomId),
-      buildJsonRequest('PATCH', gameSettings),
+      buildJsonRequest('PATCH', withCurrentUser({ gameSettings })),
     ).then(parseJsonResponse);
 
     return normalizeRoomPayload(room);
@@ -110,7 +122,7 @@ export const gameroomService = {
   async startRoom(roomId) {
     const room = await fetch(
       gameroomApi.roomStart(roomId),
-      buildJsonRequest('POST'),
+      buildJsonRequest('POST', withCurrentUser()),
     ).then(parseJsonResponse);
 
     return normalizeRoomPayload(room);
@@ -119,7 +131,7 @@ export const gameroomService = {
   async deleteRoom(roomId) {
     const room = await fetch(
       gameroomApi.roomById(roomId),
-      buildJsonRequest('DELETE'),
+      buildJsonRequest('DELETE', withCurrentUser()),
     ).then(parseJsonResponse);
 
     return normalizeRoomPayload(room);

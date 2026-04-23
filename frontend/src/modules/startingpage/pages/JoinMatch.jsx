@@ -168,7 +168,7 @@ export function JoinMatch() {
   };
 
   return (
-    <div className="neon-page flex items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
+    <div className="join-match-page neon-page flex items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
       <div className="neon-shell w-full max-w-6xl">
         <button
           onClick={() => navigate(ROUTES.MAIN_MENU)}
@@ -207,7 +207,7 @@ export function JoinMatch() {
               </div>
 
               {errorMessage ? (
-                <div className="mb-4 rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+                <div className="join-match-error mb-4 rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm font-bold text-rose-100">
                   {errorMessage}
                 </div>
               ) : null}

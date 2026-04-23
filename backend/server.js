@@ -2,6 +2,7 @@ require('dotenv/config')
 const http = require('node:http')
 const app = require('./src/app')
 const connectDB = require('./src/config/db')
+const { seedAuthUsers } = require('./seed/seed')
 const { ensureProfileSeedData } = require('./src/modules/profile/profile.model')
 const { ensureStartingPageSeedData } = require('./src/modules/starting-page/starting-page.model')
 const { initGameroomSocketServer } = require('./src/socket/gameroom.socket')
@@ -21,6 +22,8 @@ server.on('error', (error) => {
 })
 
 connectDB().then(async () => {
+  await seedAuthUsers()
+
   await Promise.all([
     ensureProfileSeedData(),
     ensureStartingPageSeedData(),

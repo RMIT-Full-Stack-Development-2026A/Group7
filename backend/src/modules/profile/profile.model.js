@@ -1,9 +1,6 @@
 const mongoose = require('mongoose')
 const bcrypt = require('bcryptjs')
 const User = require('../auth/auth.model')
-const { users } = require('../../seed')
-
-const { admin: defaultAdmin } = users
 
 const profileSettingsSchema = new mongoose.Schema(
   {
@@ -41,11 +38,16 @@ const mailboxSchema = new mongoose.Schema(
 const ProfileSettings = mongoose.models.ProfileSettings || mongoose.model('ProfileSettings', profileSettingsSchema)
 const MailboxMessage = mongoose.models.MailboxMessage || mongoose.model('MailboxMessage', mailboxSchema)
 
-const DEFAULT_PROFILE_IDENTIFIER = defaultAdmin.username
-const DEFAULT_PROFILE_NAME = defaultAdmin.name
-const DEFAULT_PROFILE_EMAIL = defaultAdmin.email
+const DEFAULT_PROFILE_IDENTIFIER = 'admin'
+const DEFAULT_PROFILE_NAME = 'Admin'
+const DEFAULT_PROFILE_EMAIL = 'admin@tictactoang.com'
+const DEFAULT_PROFILE_PASSWORD = 'Admin@1234'
 const LEGACY_DEFAULT_PROFILE_AVATAR = 'https://images.unsplash.com/photo-1772371272167-0117a6573d58?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400'
-const DEFAULT_PROFILE_AVATAR = defaultAdmin.avatar
+const DEFAULT_PROFILE_AVATAR = 'Mambo.png'
+const DEFAULT_PROFILE_COUNTRY = 'Vietnam'
+const DEFAULT_PROFILE_ROLE = 'admin'
+const DEFAULT_PROFILE_STATUS = 'active'
+const DEFAULT_PROFILE_PREMIUM = false
 
 const buildDefaultProfile = async () => {
   const existing = await User.findOne({
@@ -76,17 +78,17 @@ const buildDefaultProfile = async () => {
       existing.avatar = DEFAULT_PROFILE_AVATAR
     }
 
-    const passwordMatches = await bcrypt.compare(defaultAdmin.loginPassword, existing.password)
+    const passwordMatches = await bcrypt.compare(DEFAULT_PROFILE_PASSWORD, existing.password)
     if (!passwordMatches) {
-      existing.password = await bcrypt.hash(defaultAdmin.loginPassword, 12)
-      existing.failedLoginAttempts = defaultAdmin.failedLoginAttempts
-      existing.lockUntil = defaultAdmin.lockUntil
+      existing.password = await bcrypt.hash(DEFAULT_PROFILE_PASSWORD, 12)
+      existing.failedLoginAttempts = 0
+      existing.lockUntil = null
     }
 
-    existing.country = defaultAdmin.country
-    existing.role = defaultAdmin.role
-    existing.accountStatus = defaultAdmin.accountStatus
-    existing.isPremium = defaultAdmin.isPremium
+    existing.country = DEFAULT_PROFILE_COUNTRY
+    existing.role = DEFAULT_PROFILE_ROLE
+    existing.accountStatus = DEFAULT_PROFILE_STATUS
+    existing.isPremium = DEFAULT_PROFILE_PREMIUM
 
     if (existing.isModified()) {
       await existing.save()
@@ -95,17 +97,16 @@ const buildDefaultProfile = async () => {
     return existing
   }
 
-  const password = await bcrypt.hash(defaultAdmin.loginPassword, 12)
+  const password = await bcrypt.hash(DEFAULT_PROFILE_PASSWORD, 12)
   return User.create({
-    _id: defaultAdmin._id,
     name: DEFAULT_PROFILE_NAME,
     username: DEFAULT_PROFILE_IDENTIFIER,
     email: DEFAULT_PROFILE_EMAIL,
     password,
-    country: defaultAdmin.country,
-    role: defaultAdmin.role,
-    isPremium: defaultAdmin.isPremium,
-    accountStatus: defaultAdmin.accountStatus,
+    country: DEFAULT_PROFILE_COUNTRY,
+    role: DEFAULT_PROFILE_ROLE,
+    isPremium: DEFAULT_PROFILE_PREMIUM,
+    accountStatus: DEFAULT_PROFILE_STATUS,
     avatar: DEFAULT_PROFILE_AVATAR,
   })
 }

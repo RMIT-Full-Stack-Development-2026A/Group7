@@ -46,6 +46,15 @@ const login = async (identifier, password) => {
     throw err
   }
 
+  if (user.timeoutUntil && user.timeoutUntil > new Date()) {
+    const secondsLeft = Math.ceil((user.timeoutUntil - Date.now()) / 1000)
+    const err = new Error(`Account timed out. Try again in ${secondsLeft}s.`)
+    err.statusCode = 403
+    err.locked = true
+    err.secondsLeft = secondsLeft
+    throw err
+  }
+
   if (user.accountStatus === 'inactive') {
     const err = new Error('Account deactivated. Contact support.')
     err.statusCode = 403

@@ -28,13 +28,17 @@ export const useLogin = () => {
 
   const handleLogin = async (values, setErrors) => {
     if (lockInfo.locked) return
-    const errs = validateLoginForm(values)
+    const loginValues = {
+      identifier: values.identifier.trim(),
+      password: values.password.trim(),
+    }
+    const errs = validateLoginForm(loginValues)
     if (Object.values(errs).some(e => e !== '')) { setErrors(errs); return }
 
     setLoading(true)
     setServerError('')
     try {
-      const { data, ok, status } = await loginPlayer(values)
+      const { data, ok, status } = await loginPlayer(loginValues)
       if (ok) {
         if (data.token) localStorage.setItem('token', data.token)
         if (data.user) localStorage.setItem('authUser', JSON.stringify(data.user))
@@ -55,7 +59,7 @@ export const useLogin = () => {
           setLockInfo({ attempts: newAttempts, locked: true, secondsLeft: 60 })
         } else {
           setLockInfo(prev => ({ ...prev, attempts: newAttempts }))
-          setServerError(data.message || 'Invalid username/email or password.')
+          setServerError(data.message || data.error || `Login failed (${status}).`)
         }
       }
     } catch {

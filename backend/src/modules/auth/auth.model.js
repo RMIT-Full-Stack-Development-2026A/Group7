@@ -50,6 +50,7 @@ const userSchema = new mongoose.Schema(
     },
     isPremium: { type: Boolean, default: false },
     subscriptionEndDate: { type: Date, default: null },
+    timeoutUntil: { type: Date, default: null },
     failedLoginAttempts: { type: Number, default: 0 },
     lockUntil: { type: Date, default: null },
     lastLoginAt: { type: Date, default: null },

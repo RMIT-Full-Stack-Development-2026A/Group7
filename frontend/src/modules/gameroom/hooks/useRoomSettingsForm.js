@@ -62,10 +62,10 @@ export function useRoomSettingsForm(onCreateRoom) {
     setIsLoading(true);
 
     try {
-      const { userId, username, name, avatar } = await resolveAuthIdentity();
+      const { userId, username, name, email, avatar } = await resolveAuthIdentity();
       const displayName = name || username;
 
-      if (!userId || !username) {
+      if (!userId && !username && !email) {
         throw new Error('Please log in again before creating a room.');
       }
 
@@ -77,6 +77,8 @@ export function useRoomSettingsForm(onCreateRoom) {
         marker,
         timeToThink,
         userId,
+        username,
+        email,
         hostName: displayName,
         hostAvatar: avatar,
       });

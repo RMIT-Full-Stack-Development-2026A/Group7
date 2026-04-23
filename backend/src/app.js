@@ -7,6 +7,7 @@ const aiLogicRoutes = require('./modules/AILogic/AILogic.routes')
 const gameroomRoutes = require('./modules/gameroom/gameroom.routes')
 const profileRoutes = require('./modules/profile/profile.routes')
 const startingPageRoutes = require('./modules/starting-page/starting-page.routes')
+const adminRoutes = require('./modules/admin/admin.routes')
 
 const app = express()
 
@@ -34,6 +35,7 @@ app.use('/api/gameroom', gameroomRoutes)
 app.use('/api/profile', profileRoutes)
 app.use('/api/starting-page', startingPageRoutes)
 app.use('/api/startingpage', startingPageRoutes)
+app.use('/api/admin', adminRoutes)
 
 app.get('/api/health', (_, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })

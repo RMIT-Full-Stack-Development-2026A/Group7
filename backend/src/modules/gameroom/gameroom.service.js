@@ -39,6 +39,21 @@ const buildHostPlayerFromUser = (user) => {
   }
 }
 
+const findUserByIdentity = async ({ userId, username, email } = {}) => {
+  const filters = []
+
+  if (userId) filters.push({ _id: userId })
+  if (username) filters.push({ username: String(username).trim() })
+  if (email) filters.push({ email: String(email).trim().toLowerCase() })
+
+  for (const filter of filters) {
+    const user = await User.findOne(filter).lean().catch(() => null)
+    if (user) return user
+  }
+
+  return null
+}
+
 const ensureHostPlayerPresent = async (room) => {
   if (!room?.host) {
     return room
@@ -66,14 +81,15 @@ const ensureHostPlayerPresent = async (room) => {
 }
 
 const createGameroom = async (userId, roomData) => {
-  const { roomName, size, boardStyle, boardSize, marker, timeToThink, hostName, hostAvatar } = roomData
+  const { roomName, size, boardStyle, boardSize, marker, timeToThink, username, email, hostName, hostAvatar } = roomData
   const roomId = await generateUniqueRoomId()
-  const authUser = userId ? await User.findById(userId).lean().catch(() => null) : null
+  const authUser = await findUserByIdentity({ userId, username, email })
 
   if (!authUser) {
     throw new ErrorResponse('Authenticated user not found', 404)
   }
 
+  const resolvedUserId = String(authUser._id)
   const resolvedHostName = hostName || authUser?.name || authUser?.username
   const resolvedHostAvatar = hostAvatar || authUser?.avatar || ''
 
@@ -81,7 +97,7 @@ const createGameroom = async (userId, roomData) => {
     roomId,
     roomName,
     size,
-    host: userId,
+    host: resolvedUserId,
     gameSettings: {
       boardStyle: boardStyle || 'Classic',
       boardSize: boardSize || '10x10',
@@ -90,7 +106,7 @@ const createGameroom = async (userId, roomData) => {
     },
     players: [
       {
-        userId,
+        userId: resolvedUserId,
         name: resolvedHostName,
         avatar: resolvedHostAvatar,
         type: 'human',

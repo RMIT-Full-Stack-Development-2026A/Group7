@@ -139,7 +139,7 @@ const startGameroom = async (req, res, next) => {
     const playerIds = room.players.map((player) => player.userId || player._id).filter(Boolean)
     const gameSession = await gameService.createGameSession(req.params.id, playerIds)
 
-    await gameroomService.updateGameroomStatus(req.params.id, 'started')
+    await gameroomService.updateGameroomStatus(req.params.id, 'in-battle')
 
     res.json({
       ok: true,
