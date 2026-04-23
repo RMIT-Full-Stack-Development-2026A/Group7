@@ -1,0 +1,26 @@
+export const ROUTES = {
+  HOME: '/',
+  MAIN_MENU: '/main-menu',
+  LOGIN: '/login',
+  REGISTER: '/register',
+  CREATE_ROOM: '/createroom',
+  GAMEROOM: '/gameroom',
+  CREATE_MATCH: '/create-match',
+  JOIN_MATCH: '/join-match',
+  CASUAL_GAME: '/casual-game',
+  COMPETITIVE_MODE: '/competitive-mode',
+  HOW_TO_PLAY: '/how-to-play',
+  PROFILE: '/profile',
+  MATCH_HISTORY: '/match-history',
+  MAILBOX: '/mailbox',
+  SETTINGS: '/settings',
+  SETTING_PAGE: '/setting-page',
+  SPECIAL_MODES: '/special-modes',
+  SUBSCRIPTION: '/subscription',
+  ADMIN: '/admin',
+  GAME_LOADING: '/game-loading',
+  VS_COMPUTER: '/vs-computer',
+  VS_FRIEND: '/vs-friend',
+}
+
+export default ROUTES
