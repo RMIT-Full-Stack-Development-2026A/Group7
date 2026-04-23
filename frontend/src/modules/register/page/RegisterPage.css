@@ -1,0 +1,7 @@
+.reg-page { min-height: 100vh; position: relative; overflow: hidden; }
+.reg-center {
+  position: relative; z-index: 1; min-height: 100vh;
+  display: flex; align-items: center; justify-content: center; padding: 2rem 1rem;
+}
+.reg-card { width: 100%; max-width: 480px; padding: 2.5rem; }
+@media (max-width: 520px) { .reg-card { padding: 1.75rem 1.25rem; } }

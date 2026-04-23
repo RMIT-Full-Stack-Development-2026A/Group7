@@ -1,0 +1,24 @@
+.login-page { min-height: 100vh; position: relative; overflow: hidden; }
+.login-center {
+  position: relative; z-index: 1; min-height: 100vh;
+  display: flex; align-items: center; justify-content: center; padding: 2rem 1rem;
+}
+.login-card { width: 100%; max-width: 440px; padding: 2.5rem; }
+
+.attempt-warning {
+  background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.35);
+  border-radius: 8px; padding: .72rem 1rem; color: #fbbf24;
+  font-size: .83rem; display: flex; align-items: center; gap: 8px;
+}
+.lock-warning {
+  background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.35);
+  border-radius: 8px; padding: .72rem 1rem; color: #f87171;
+  font-size: .83rem; display: flex; align-items: center; gap: 8px;
+}
+.lock-countdown { font-weight: 700; font-size: 1rem; color: #ef4444; min-width: 28px; text-align: center; }
+.success-message {
+  background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.3);
+  border-radius: 8px; padding: .72rem 1rem; color: #4ade80;
+  font-size: .85rem; display: flex; align-items: center; gap: 8px; margin-bottom: 1rem;
+}
+@media (max-width: 520px) { .login-card { padding: 1.75rem 1.25rem; } }

@@ -1,79 +1,109 @@
-require('dotenv').config({ path: '../.env' });
-const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
-const config = require('../src/config');
-const User = require('../src/models/User');
-const Plan = require('../src/models/Plan');
-const Subscription = require('../src/models/Subscription');
+/**
+ * TicTacToang — Gold Data Set Seed
+ * ─────────────────────────────────
+ * Run from the backend folder:
+ *   node seed/seed.js
+ *
+ * Or via npm script (after adding to package.json):
+ *   npm run seed
+ *
+ * Creates three accounts every time (wipes existing seed accounts first):
+ *   Admin   → goes to /admin after login
+ *   PlayerA → premium account
+ *   PlayerB → standard account
+ */
+
+require('dotenv').config()     // picks up .env in backend/
+const mongoose = require('mongoose')
+const bcrypt   = require('bcryptjs')         // app-test uses bcryptjs
+
+// ── Model ─────────────────────────────────────────────────────────────────────
+// Must match auth.model.js exactly:
+//   password  (not passwordHash)
+//   accountStatus  (not isActive)
+//   isPremium  (not premiumStatus)
+const User = require('../src/modules/auth/auth.model')
+
+// ── DB connection — same env vars as db.js ────────────────────────────────────
+const MONGO_URI = process.env.MONGODB_URI     || 'mongodb://127.0.0.1:27017'
+const DB_NAME   = process.env.MONGODB_DB_NAME || 'tictactoang'
 
 async function seed() {
-  await mongoose.connect(config.mongoUri);
-  console.log('Connected to MongoDB for seeding');
+  await mongoose.connect(MONGO_URI, { dbName: DB_NAME })
+  console.log(`\n🔌 Connected → ${mongoose.connection.host}/${mongoose.connection.name}`)
 
-  await User.deleteMany({});
-  await Plan.deleteMany({});
-  await Subscription.deleteMany({});
+  // ── Wipe existing seed accounts only (leave other data untouched) ──────────
+  const seedEmails = [
+    'admin@tictactoang.com',
+    'playera@tictactoang.com',
+    'playerb@tictactoang.com',
+  ]
+  const seedUsernames = ['admin', 'PlayerA', 'PlayerB']
 
-  const saltRounds = config.bcryptSaltRounds || 10;
+  await User.deleteMany({
+    $or: [
+      { email: { $in: seedEmails } },
+      { username: { $in: seedUsernames } },
+    ],
+  })
 
-  const adminPass = await bcrypt.hash('AdminPass123!', saltRounds);
-  const admin = await User.create({
-    username: 'admin',
-    email: 'admin@example.com',
-    passwordHash: adminPass,
-    country: 'VN',
-    role: 'admin',
-    isActive: true
-  });
+  const ROUNDS = 12
 
-  const monthlyPlan = await Plan.create({
-    name: 'Monthly Premium',
-    priceUSD: 10,
-    durationDays: 30,
-    features: ['replay', 'chat', 'online-arena']
-  });
+  // ── Admin ─────────────────────────────────────────────────────────────────
+  await User.create({
+    name:          'Admin',
+    username:      'admin',
+    email:         'admin@tictactoang.com',
+    password:      await bcrypt.hash('Admin@1234', ROUNDS),
+    country:       'Vietnam',
+    role:          'admin',           // AdminOnlyLayout checks this
+    accountStatus: 'active',
+    isPremium:     false,
+  })
 
-  const playerAPass = await bcrypt.hash('PlayerAPass1!', saltRounds);
-  const playerA = await User.create({
-    username: 'playerA',
-    email: 'playerA@example.com',
-    passwordHash: playerAPass,
-    country: 'VN',
-    role: 'player',
-    premiumStatus: true,
-    subscriptionEndDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
-    isActive: true
-  });
+  // ── Player A — premium ────────────────────────────────────────────────────
+  await User.create({
+    name:                'PlayerA',
+    username:            'PlayerA',
+    email:               'playera@tictactoang.com',
+    password:            await bcrypt.hash('PlayerA@123', ROUNDS),
+    country:             'Vietnam',
+    role:                'player',
+    accountStatus:       'active',
+    isPremium:           true,
+    subscriptionEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+  })
 
-  await Subscription.create({
-    userId: playerA._id,
-    planId: monthlyPlan._id,
-    startDate: new Date(),
-    endDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
-    status: 'Active',
-    idempotencyKey: 'seed-playerA-1'
-  });
+  // ── Player B — standard ───────────────────────────────────────────────────
+  await User.create({
+    name:          'PlayerB',
+    username:      'PlayerB',
+    email:         'playerb@tictactoang.com',
+    password:      await bcrypt.hash('PlayerB@123', ROUNDS),
+    country:       'Australia',
+    role:          'player',
+    accountStatus: 'active',
+    isPremium:     false,
+  })
 
-  const playerBPass = await bcrypt.hash('PlayerBPass1!', saltRounds);
-  const playerB = await User.create({
-    username: 'playerB',
-    email: 'playerB@example.com',
-    passwordHash: playerBPass,
-    country: 'VN',
-    role: 'player',
-    premiumStatus: false,
-    isActive: true
-  });
+  // ── Summary ───────────────────────────────────────────────────────────────
+  console.log('\n✅ Seed complete!\n')
+  console.log('┌─────────────────────────────────────────────────────────┐')
+  console.log('│                  GOLD DATA SET ACCOUNTS                  │')
+  console.log('├──────────┬───────────────────────────┬──────────────────┤')
+  console.log('│ Role     │ Email                     │ Password         │')
+  console.log('├──────────┼───────────────────────────┼──────────────────┤')
+  console.log('│ admin    │ admin@tictactoang.com     │ Admin@1234       │')
+  console.log('│ player   │ playera@tictactoang.com   │ PlayerA@123      │')
+  console.log('│ player   │ playerb@tictactoang.com   │ PlayerB@123      │')
+  console.log('└──────────┴───────────────────────────┴──────────────────┘')
+  console.log('\nAdmin login → redirects directly to /admin panel.')
+  console.log('Players    → redirects to /main-menu.\n')
 
-  console.log('Seed complete:');
-  console.log('Admin: admin@example.com / AdminPass123!');
-  console.log('Player A: playerA@example.com / PlayerAPass1!');
-  console.log('Player B: playerB@example.com / PlayerBPass1!');
-  await mongoose.disconnect();
-  process.exit(0);
+  await mongoose.disconnect()
 }
 
-seed().catch(err => {
-  console.error('Seed error', err);
-  process.exit(1);
-});
+seed().catch((err) => {
+  console.error('❌ Seed failed:', err.message)
+  process.exit(1)
+})

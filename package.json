@@ -1,26 +1,15 @@
 {
-  "name": "group7",
+  "name": "tictactoang",
+  "private": true,
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
   "scripts": {
-    "install:all": "cd backend && npm install && cd ../frontend && npm install",
-    "dev": "concurrently \"cd backend && npm run dev\" \"cd frontend && npm run dev\"",
-    "seed": "cd backend && npm run seed"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/RMIT-Full-Stack-Development-2026A/Group7.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/RMIT-Full-Stack-Development-2026A/Group7/issues"
-  },
-  "homepage": "https://github.com/RMIT-Full-Stack-Development-2026A/Group7#readme",
-  "devDependencies": {
-    "concurrently": "^9.2.1"
+    "install:all": "npm install --workspaces",
+    "dev:frontend": "npm --workspace frontend run dev",
+    "dev:backend": "npm --workspace backend run dev",
+    "build:frontend": "npm --workspace frontend run build"
   }
 }

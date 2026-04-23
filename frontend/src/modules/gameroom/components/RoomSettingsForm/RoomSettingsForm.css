@@ -1,0 +1,364 @@
+.game-setup-container {
+  min-height: 100svh;
+  width: 100%;
+  background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: clamp(20px, 4vw, 40px);
+  position: relative;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.setup-back-btn {
+  position: absolute;
+  top: clamp(20px, 4vw, 36px);
+  left: clamp(20px, 4vw, 36px);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 22px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(19, 25, 52, 0.72);
+  color: #e5e7eb;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.25s ease;
+}
+
+.setup-back-btn:hover {
+  background: rgba(28, 37, 73, 0.88);
+  border-color: rgba(102, 126, 234, 0.45);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.24);
+}
+
+.setup-back-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.game-setup-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 20% 50%, rgba(100, 200, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(150, 100, 255, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.setup-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 760px;
+  width: 100%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  position: relative;
+  z-index: 1;
+  margin: auto 0;
+}
+
+.setup-title {
+  color: #fff;
+  font-size: 32px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 30px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.setup-section {
+  margin-bottom: 25px;
+}
+
+.setup-section label {
+  display: block;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.setup-input {
+  width: 100%;
+  padding: 12px 15px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.setup-input:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(102, 126, 234, 0.6);
+  box-shadow: 0 0 15px rgba(102, 126, 234, 0.2);
+}
+
+.setup-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.option-btn,
+.time-btn,
+.marker-btn {
+  padding: 12px 15px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.option-btn:hover,
+.time-btn:hover,
+.marker-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(102, 126, 234, 0.5);
+}
+
+.option-btn.active,
+.time-btn.active,
+.marker-btn.active {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-color: rgba(102, 126, 234, 0.8);
+  color: #fff;
+  box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
+}
+
+.marker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.marker-btn {
+  font-size: 16px;
+  font-weight: 700;
+  padding: 15px 10px;
+}
+
+.time-slider-container {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.time-slider-container .time-slider {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.time-slider-container .time-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  cursor: pointer;
+  box-shadow: 0 0 15px rgba(102, 126, 234, 0.4);
+}
+
+.time-slider-container .time-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 0 15px rgba(102, 126, 234, 0.4);
+}
+
+.time-display {
+  color: #667eea;
+  font-weight: 700;
+  font-size: 16px;
+  min-width: 50px;
+  text-align: right;
+}
+
+.time-buttons {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.time-btn {
+  padding: 10px 8px;
+  font-size: 12px;
+}
+
+.create-room-btn {
+  width: 100%;
+  padding: 15px 30px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 20px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.create-room-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+}
+
+.create-room-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.create-room-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+  .setup-card {
+    padding: 28px 20px;
+    max-width: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .setup-back-btn {
+    position: static;
+    margin-bottom: 18px;
+    align-self: flex-start;
+  }
+
+  .setup-title {
+    font-size: 28px;
+  }
+
+  .options-grid,
+  .marker-grid,
+  .time-buttons {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .time-slider-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .time-display {
+    text-align: left;
+  }
+}
+
+html[data-app-theme='light'] .game-setup-container,
+.game-setup-container.theme-light {
+  background:
+    radial-gradient(circle at 16% 18%, rgba(164, 195, 255, 0.2), transparent 22%),
+    radial-gradient(circle at 84% 14%, rgba(204, 176, 255, 0.22), transparent 20%),
+    linear-gradient(180deg, #eef3ff 0%, #e7edff 52%, #eef0ff 100%);
+}
+
+html[data-app-theme='light'] .game-setup-container::before,
+.game-setup-container.theme-light::before {
+  background:
+    radial-gradient(circle at 20% 50%, rgba(111, 140, 255, 0.14) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(156, 108, 255, 0.12) 0%, transparent 50%);
+}
+
+html[data-app-theme='light'] .setup-back-btn,
+.game-setup-container.theme-light .setup-back-btn {
+  background: rgba(255, 255, 255, 0.86);
+  border-color: rgba(166, 180, 255, 0.34);
+  color: #31405c;
+  box-shadow: 0 14px 30px rgba(128, 148, 225, 0.12);
+}
+
+html[data-app-theme='light'] .setup-back-btn:hover,
+.game-setup-container.theme-light .setup-back-btn:hover {
+  background: rgba(248, 250, 255, 0.98);
+  border-color: rgba(111, 140, 255, 0.42);
+}
+
+html[data-app-theme='light'] .setup-card,
+.game-setup-container.theme-light .setup-card {
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(166, 180, 255, 0.28);
+  box-shadow:
+    0 18px 40px rgba(128, 148, 225, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+html[data-app-theme='light'] .setup-section label,
+.game-setup-container.theme-light .setup-section label {
+  color: #31405c;
+}
+
+html[data-app-theme='light'] .setup-input,
+html[data-app-theme='light'] .option-btn,
+html[data-app-theme='light'] .time-btn,
+html[data-app-theme='light'] .marker-btn,
+.game-setup-container.theme-light .setup-input,
+.game-setup-container.theme-light .option-btn,
+.game-setup-container.theme-light .time-btn,
+.game-setup-container.theme-light .marker-btn {
+  background: rgba(247, 249, 255, 0.96);
+  border-color: rgba(166, 180, 255, 0.3);
+  color: #51617e;
+}
+
+html[data-app-theme='light'] .setup-input::placeholder,
+.game-setup-container.theme-light .setup-input::placeholder {
+  color: #8d98b5;
+}
+
+html[data-app-theme='light'] .setup-input:focus,
+.game-setup-container.theme-light .setup-input:focus {
+  background: rgba(255, 255, 255, 0.98);
+}
+
+html[data-app-theme='light'] .time-slider-container .time-slider,
+.game-setup-container.theme-light .time-slider-container .time-slider {
+  background: rgba(166, 180, 255, 0.24);
+}
+
+html[data-app-theme='light'] .time-display,
+.game-setup-container.theme-light .time-display {
+  color: #5a71d8;
+}
