@@ -1,8 +1,8 @@
-# Test Account
+# Seed Data
 
-This folder stores shared test-account data for local development.
+This folder stores local development seed data.
 
-## Available account
+## Users
 
 ### `admin`
 
@@ -11,7 +11,7 @@ This folder stores shared test-account data for local development.
 - `username`: `admin`
 - `email`: `theonewhoasked@example.com`
 - `loginPassword`: `WhoAsked123@`
-- `password`: `$2a$12$N1mS9Tnn5UfAA8GtGCaLFu7WNKGqHgjsm51YICeIpMDa9VH2A7QX.`
+- `password`: `$2a$12$WyWIUcLWcLb3.OAASl4NaOuqFGiD55.FRsHa0xW3iZFuyQnZQy8Bq`
 - `country`: `XYZ`
 - `role`: `admin`
 - `accountStatus`: `active`
@@ -20,7 +20,7 @@ This folder stores shared test-account data for local development.
 - `failedLoginAttempts`: `0`
 - `lockUntil`: `null`
 - `lastLoginAt`: `null`
-- `avatar`: `https://images.unsplash.com/photo-1772371272167-0117a6573d58?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400`
+- `avatar`: `Mambo.png`
 - `createdAt`: `2026-04-18T08:39:56.482Z`
 - `updatedAt`: `2026-04-18T09:24:26.146Z`
 - `__v`: `0`
@@ -28,5 +28,5 @@ This folder stores shared test-account data for local development.
 ## Usage
 
 ```js
-const { admin } = require('../shared/test-account')
+const { users } = require('../../seed')
 ```

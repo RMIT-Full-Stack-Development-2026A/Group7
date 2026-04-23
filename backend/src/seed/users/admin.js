@@ -4,7 +4,7 @@ const admin = {
   username: 'admin',
   email: 'theonewhoasked@example.com',
   loginPassword: 'WhoAsked123@',
-  password: '$2a$12$N1mS9Tnn5UfAA8GtGCaLFu7WNKGqHgjsm51YICeIpMDa9VH2A7QX.',
+  password: '$2a$12$WyWIUcLWcLb3.OAASl4NaOuqFGiD55.FRsHa0xW3iZFuyQnZQy8Bq',
   country: 'XYZ',
   role: 'admin',
   accountStatus: 'active',

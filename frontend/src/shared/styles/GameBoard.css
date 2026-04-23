@@ -527,7 +527,7 @@ body[data-app-theme='light'] {
 }
 
 .game-board-intersection.occupied {
-  font-weight: 900;
+  font-weight: 1000;
   background: transparent;
   box-shadow: none;
   text-shadow: 0 8px 18px rgba(8, 18, 36, 0.22);
@@ -559,6 +559,35 @@ body[data-app-theme='light'] {
 .game-board-intersection.marker-tone-b { color: #89a9ff; }
 .game-board-intersection.marker-tone-c { color: #7ef0b7; }
 .game-board-intersection.marker-tone-d { color: #ffd36e; }
+
+body[data-app-theme='light'] .mark-x,
+body[data-app-theme='light'] .mark-o,
+body[data-app-theme='light'] .gameboard-lines-marker,
+body[data-app-theme='light'] .game-board-intersection.occupied {
+  font-weight: 1000;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.82), 0 4px 10px rgba(59, 82, 139, 0.22);
+  -webkit-text-stroke: 0.35px currentColor;
+}
+
+body[data-app-theme='light'] .marker-tone-a,
+body[data-app-theme='light'] .game-board-intersection.marker-tone-a {
+  color: #c83822;
+}
+
+body[data-app-theme='light'] .marker-tone-b,
+body[data-app-theme='light'] .game-board-intersection.marker-tone-b {
+  color: #2857c6;
+}
+
+body[data-app-theme='light'] .marker-tone-c,
+body[data-app-theme='light'] .game-board-intersection.marker-tone-c {
+  color: #158047;
+}
+
+body[data-app-theme='light'] .marker-tone-d,
+body[data-app-theme='light'] .game-board-intersection.marker-tone-d {
+  color: #a15c00;
+}
 
 .gameboard-style-modern .game-board-intersections {
   gap: 0;
