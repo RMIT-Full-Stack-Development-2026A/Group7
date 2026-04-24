@@ -1,8 +1,6 @@
 node_modules/
 dist/
 build/
-.env
-.env.*
 backend/mongosh.exe
 .DS_Store
 Thumbs.db
