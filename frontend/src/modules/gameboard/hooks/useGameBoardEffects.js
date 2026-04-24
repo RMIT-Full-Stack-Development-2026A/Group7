@@ -316,7 +316,10 @@ export const useGameBoardEffects = ({
     }
 
     roomCleanupDoneRef.current = true
-    gameroomService.deleteRoom(roomData._id).catch(() => {})
+    gameroomService.deleteRoom(roomData._id).catch((error) => {
+      roomCleanupDoneRef.current = false
+      console.error('Failed to delete finished room:', error)
+    })
     return undefined
   }, [gameOver, roomData, roomCleanupDoneRef])
 

@@ -157,9 +157,14 @@ const deleteGameroom = async (req, res, next) => {
   try {
     const userId = req.user?.userId || req.user?.id || req.body.userId
     const room = await gameroomService.getGameroomById(req.params.id)
+    const normalizedUserId = userId ? String(userId) : null
+    const isHost = normalizedUserId && String(room.host) === normalizedUserId
+    const isParticipant = normalizedUserId && Array.isArray(room.players)
+      && room.players.some((player) => String(player?.userId) === normalizedUserId)
+    const canParticipantCleanup = isParticipant && ['in-battle', 'completed'].includes(room.status)
 
-    if (String(room.host) !== String(userId)) {
-      return next(new ErrorResponse('Only host can delete the room', 403))
+    if (!isHost && !canParticipantCleanup) {
+      return next(new ErrorResponse('Only the host or a match participant can delete this room', 403))
     }
 
     const deletedRoom = await gameroomService.deleteGameroom(req.params.id)

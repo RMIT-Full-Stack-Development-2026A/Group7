@@ -5,6 +5,18 @@ import ROUTES from '../../../router/routes.config';
 import { gameroomService } from '../../gameroom/services/gameroomService.js';
 import { getStoredAuthIdentity } from '../../gameroom/utils/authIdentity.js';
 
+const isJoinableRoom = (room) => {
+  if (!room) {
+    return false;
+  }
+
+  if (room.status === 'completed' || room.status === 'in-battle') {
+    return false;
+  }
+
+  return room.players.length < room.size;
+};
+
 export function JoinMatch() {
   const navigate = useNavigate();
   const currentUser = getStoredAuthIdentity();
@@ -27,7 +39,7 @@ export function JoinMatch() {
           return;
         }
 
-        setRooms(liveRooms.filter((room) => room.status !== 'completed'));
+        setRooms(liveRooms.filter(isJoinableRoom));
       } catch (error) {
         if (!isMounted) {
           return;
@@ -112,6 +124,10 @@ export function JoinMatch() {
     setErrorMessage('');
 
     try {
+      if (!isJoinableRoom(room)) {
+        throw new Error('This room is no longer available.');
+      }
+
       const latestRoom = await ensureRoomJoined(room);
       navigate(ROUTES.GAMEROOM, {
         state: { createdRoom: latestRoom, returnTo: ROUTES.JOIN_MATCH },
