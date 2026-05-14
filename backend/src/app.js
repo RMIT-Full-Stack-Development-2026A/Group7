@@ -1,5 +1,6 @@
 const express = require('express')
 const cors = require('cors')
+const { corsOptions } = require('./config/cors')
 const errorMiddleware = require('./middleware/errorMiddleware')
 const authRoutes = require('./modules/auth/auth.routes')
 const gameRoutes = require('./modules/game/game.routes')
@@ -11,21 +12,9 @@ const adminRoutes = require('./modules/admin/admin.routes')
 
 const app = express()
 
-const LOCAL_ORIGIN_PATTERN = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/
-
-app.use(cors({
-  origin(origin, callback) {
-    if (!origin || LOCAL_ORIGIN_PATTERN.test(origin)) {
-      callback(null, true)
-      return
-    }
-
-    callback(new Error(`CORS blocked for origin: ${origin}`))
-  },
-  credentials: true,
-}))
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
+app.use(cors(corsOptions))
+app.use(express.json({ limit: '5mb' }))
+app.use(express.urlencoded({ extended: true, limit: '5mb' }))
 
 app.use('/api/users', authRoutes)
 app.use('/api/auth', authRoutes)

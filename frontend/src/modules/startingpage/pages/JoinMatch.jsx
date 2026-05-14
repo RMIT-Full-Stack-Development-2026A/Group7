@@ -1,18 +1,61 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Users, Hash, X, Zap } from 'lucide-react';
 import ROUTES from '../../../router/routes.config';
 import { gameroomService } from '../../gameroom/services/gameroomService.js';
-import { getStoredAuthIdentity } from '../../gameroom/utils/authIdentity.js';
+import { getStoredAuthIdentity, resolveAuthIdentity } from '../../gameroom/utils/authIdentity.js';
+
+const isJoinableRoom = (room) => {
+  if (!room) {
+    return false;
+  }
+
+  if (room.status === 'completed' || room.status === 'in-battle') {
+    return false;
+  }
+
+  return room.players.length < room.size;
+};
 
 export function JoinMatch() {
   const navigate = useNavigate();
-  const currentUser = getStoredAuthIdentity();
+  const [currentUser, setCurrentUser] = useState(getStoredAuthIdentity);
   const [rooms, setRooms] = useState([]);
   const [roomCode, setRoomCode] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [joiningRoomId, setJoiningRoomId] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const refreshCurrentUser = async () => {
+      const resolvedUser = await resolveAuthIdentity();
+
+      if (isMounted) {
+        setCurrentUser(resolvedUser);
+      }
+    };
+
+    const handleProfileUpdated = (event) => {
+      if (event?.detail?.authUser) {
+        setCurrentUser(getStoredAuthIdentity());
+        return;
+      }
+
+      refreshCurrentUser();
+    };
+
+    refreshCurrentUser();
+    window.addEventListener('profile-updated', handleProfileUpdated);
+    window.addEventListener('storage', handleProfileUpdated);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener('profile-updated', handleProfileUpdated);
+      window.removeEventListener('storage', handleProfileUpdated);
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -27,7 +70,7 @@ export function JoinMatch() {
           return;
         }
 
-        setRooms(liveRooms.filter((room) => room.status !== 'completed'));
+        setRooms(liveRooms.filter(isJoinableRoom));
       } catch (error) {
         if (!isMounted) {
           return;
@@ -84,13 +127,31 @@ export function JoinMatch() {
     return 'join-match-status join-match-status-neutral border-slate-400/20 bg-slate-500/10 text-slate-200';
   };
 
-  const canDeleteRoom = (room) => currentUser.userId && String(room.host) === String(currentUser.userId);
+  const getCurrentUserId = useCallback(() => currentUser.userId || currentUser.id || currentUser._id || null, [currentUser]);
+  const getRoomHostId = (room) => {
+    if (!room?.host) {
+      return null;
+    }
+
+    if (typeof room.host === 'object') {
+      return room.host.userId || room.host.id || room.host._id || null;
+    }
+
+    return room.host;
+  };
+  const isCurrentUserRoomHost = useCallback((room) => {
+    const currentUserId = getCurrentUserId();
+    const roomHostId = getRoomHostId(room);
+
+    return Boolean(currentUserId && roomHostId && String(roomHostId) === String(currentUserId));
+  }, [getCurrentUserId]);
+  const canDeleteRoom = isCurrentUserRoomHost;
 
   const ensureRoomJoined = async (room) => {
     const latestRoom = await gameroomService.getRoomById(room._id);
-    const currentUserId = currentUser.userId ? String(currentUser.userId) : null;
+    const currentUserId = getCurrentUserId() ? String(getCurrentUserId()) : null;
 
-    if (!currentUserId) {
+    if (!currentUserId || isCurrentUserRoomHost(latestRoom)) {
       return latestRoom;
     }
 
@@ -112,6 +173,10 @@ export function JoinMatch() {
     setErrorMessage('');
 
     try {
+      if (!isJoinableRoom(room)) {
+        throw new Error('This room is no longer available.');
+      }
+
       const latestRoom = await ensureRoomJoined(room);
       navigate(ROUTES.GAMEROOM, {
         state: { createdRoom: latestRoom, returnTo: ROUTES.JOIN_MATCH },

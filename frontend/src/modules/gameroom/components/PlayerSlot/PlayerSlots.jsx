@@ -1,19 +1,26 @@
+import { memo, useMemo } from 'react';
 import { Crown, X } from "lucide-react";
 import { usePlayerSlots } from '../../hooks/usePlayerSlots.js';
 import { MamboAvatar, resolveAvatarUrl } from '../../../../shared/utils/avatar.utils.js';
 
-export function PlayerSlot({ player, onRemove }) {
+function PlayerSlotComponent({ player, onRemove }) {
   const { isSquareBorder, canRemove, aiLabel } = usePlayerSlots(player, onRemove);
+  const avatarSrc = useMemo(() => resolveAvatarUrl(player.avatar), [player.avatar]);
 
   return (
     <div className="player-slot-container">
       <div className="player-avatar-wrapper">
         <div className={`player-avatar-border ${isSquareBorder ? 'square' : 'circle'}`}>
           <img
-            src={resolveAvatarUrl(player.avatar)}
+            src={avatarSrc}
             alt={player.name}
             className={`player-avatar ${isSquareBorder ? 'square' : 'circle'}`}
             onError={(event) => {
+              if (event.currentTarget.dataset.fallbackApplied === 'true') {
+                return;
+              }
+
+              event.currentTarget.dataset.fallbackApplied = 'true';
               event.currentTarget.src = MamboAvatar;
             }}
           />
@@ -46,3 +53,5 @@ export function PlayerSlot({ player, onRemove }) {
     </div>
   );
 }
+
+export const PlayerSlot = memo(PlayerSlotComponent);

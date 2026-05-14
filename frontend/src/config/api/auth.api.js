@@ -1,4 +1,6 @@
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'
+import { getApiBaseUrl } from './baseUrl.js'
+
+const BASE_URL = getApiBaseUrl()
 
 export const AUTH_API = {
   baseUrl: BASE_URL,

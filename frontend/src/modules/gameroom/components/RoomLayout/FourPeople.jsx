@@ -1,20 +1,6 @@
 import { PlayerSlot } from '../PlayerSlot/PlayerSlots.jsx';
 import { AISlots } from '../AISlot/AISlots.jsx';
 
-export const initialPlayers = [
-  {
-    id: 1,
-    name: 'p1',
-    avatar:
-      'https://images.unsplash.com/photo-1772371272167-0117a6573d58?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
-    isHost: true,
-    type: 'human',
-  },
-  null,
-  null,
-  null,
-];
-
 function DefaultCenterContent() {
   return (
     <div className="vs-box-wrapper">

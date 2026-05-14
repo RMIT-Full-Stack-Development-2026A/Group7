@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { ArrowLeft, ArrowUpRight, Clock3, Swords, Trophy } from 'lucide-react';
 import ROUTES from '../../../router/routes.config';
 import { httpHelper } from '../../../services/httpHelper.js';
+import { getApiBaseUrl } from '../../../config/api/baseUrl.js';
 import { getStoredAuthIdentity } from '../../gameroom/utils/authIdentity.js';
 import { resolveAvatarUrl } from '../../../shared/utils/avatar.utils.js';
 
@@ -80,7 +81,7 @@ export function MatchHistory() {
 
       try {
         const response = await httpHelper.get(
-          `${(import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api')}/games/user/history?userId=${encodeURIComponent(storedIdentity.userId)}&limit=${HISTORY_LIMIT}`
+          `${getApiBaseUrl()}/games/user/history?userId=${encodeURIComponent(storedIdentity.userId)}&limit=${HISTORY_LIMIT}`
         );
         const historyGames = response?.data?.data?.games || [];
 

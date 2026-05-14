@@ -1,4 +1,6 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api';
+import { getApiBaseUrl } from '../../../config/api/baseUrl.js';
+
+const API_BASE_URL = getApiBaseUrl();
 
 const parseJwtPayload = (token) => {
   if (!token) {
@@ -27,11 +29,23 @@ const normalizeIdentity = (source = {}) => ({
   username: source.username || null,
   email: source.email || null,
   avatar: source.avatar || source.avatarUrl || '',
+  role: source.role || null,
+  isPremium: source.isPremium,
+  premiumStatus: source.premiumStatus,
 });
 
 export const getStoredAuthIdentity = () => {
   const token = localStorage.getItem('token');
   const storedUser = localStorage.getItem('authUser');
+  const tokenPayload = parseJwtPayload(token);
+  const tokenIdentity = {
+    userId: tokenPayload?.userId || tokenPayload?.id || null,
+    username: tokenPayload?.username || null,
+    name: tokenPayload?.name || tokenPayload?.username || null,
+    email: tokenPayload?.email || null,
+    avatar: '',
+    role: tokenPayload?.role || null,
+  };
 
   let authUser = null;
 
@@ -44,25 +58,16 @@ export const getStoredAuthIdentity = () => {
   }
 
   const normalizedUser = normalizeIdentity(authUser || {});
-  if (normalizedUser.userId && (normalizedUser.name || normalizedUser.username)) {
-    return normalizedUser;
-  }
-
-  const tokenPayload = parseJwtPayload(token);
-  const tokenIdentity = {
-    userId: tokenPayload?.userId || tokenPayload?.id || null,
-    username: tokenPayload?.username || null,
-    name: tokenPayload?.name || tokenPayload?.username || null,
-    email: tokenPayload?.email || null,
-    avatar: '',
-  };
 
   return {
-    userId: normalizedUser.userId || tokenIdentity.userId,
+    userId: tokenIdentity.userId || normalizedUser.userId,
     name: normalizedUser.name || tokenIdentity.name,
     username: normalizedUser.username || tokenIdentity.username,
     email: normalizedUser.email || tokenIdentity.email,
     avatar: normalizedUser.avatar || tokenIdentity.avatar,
+    role: normalizedUser.role || tokenIdentity.role,
+    isPremium: normalizedUser.isPremium,
+    premiumStatus: normalizedUser.premiumStatus,
   };
 };
 
@@ -78,6 +83,9 @@ export const resolveAuthIdentity = async () => {
         username: identity.username,
         email: identity.email,
         avatar: identity.avatar,
+        role: identity.role,
+        isPremium: identity.isPremium,
+        premiumStatus: identity.premiumStatus,
       }));
     }
   };
@@ -130,6 +138,9 @@ export const resolveAuthIdentity = async () => {
           username: profileIdentity.username || storedIdentity.username,
           email: profileIdentity.email || storedIdentity.email,
           avatar: profileIdentity.avatar || storedIdentity.avatar || '',
+          role: profileIdentity.role || storedIdentity.role,
+          isPremium: profileIdentity.isPremium ?? storedIdentity.isPremium,
+          premiumStatus: profileIdentity.premiumStatus ?? storedIdentity.premiumStatus,
         };
 
         persistIdentity(resolvedIdentity);

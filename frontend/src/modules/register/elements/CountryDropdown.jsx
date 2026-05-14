@@ -1,9 +1,4 @@
-export const COUNTRIES = [
-  'Vietnam', 'United States', 'United Kingdom', 'Australia', 'Canada',
-  'France', 'Germany', 'Japan', 'South Korea', 'China', 'Singapore',
-  'Thailand', 'Malaysia', 'Indonesia', 'Philippines', 'India', 'Brazil',
-  'Italy', 'Spain', 'Netherlands', 'Sweden', 'New Zealand', 'Other',
-]
+import { COUNTRIES } from '../constants/countries.js'
 
 const CountryDropdown = ({ value, onChange, error }) => (
   <div className="form-group">

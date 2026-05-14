@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import MasterVolume from '../components/settings/Preferences/MasterVolume';
 import SFX from '../components/settings/Preferences/SFX';
@@ -20,7 +20,10 @@ export default function SettingPage() {
   const [settings, setSettings] = useState(() => loadGameSettings());
 
   const [initialSettings, setInitialSettings] = useState(settings);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const hasUnsavedChanges = useMemo(
+    () => JSON.stringify(settings) !== JSON.stringify(initialSettings),
+    [settings, initialSettings]
+  );
   const returnTo = location.state?.returnTo || ROUTES.MAIN_MENU;
   const returnState = location.state?.returnState;
   const backLabel = returnTo === ROUTES.MAIN_MENU
@@ -33,16 +36,10 @@ export default function SettingPage() {
     applyThemeToDocument(settings);
   }, [settings]);
 
-  useEffect(() => {
-    const isChanged = JSON.stringify(settings) !== JSON.stringify(initialSettings);
-    setHasUnsavedChanges(isChanged);
-  }, [settings, initialSettings]);
-
   const handleSave = () => {
     const nextSettings = saveGameSettings(settings);
     setSettings(nextSettings);
     setInitialSettings(nextSettings);
-    setHasUnsavedChanges(false);
     alert('Settings saved successfully!');
   };
 

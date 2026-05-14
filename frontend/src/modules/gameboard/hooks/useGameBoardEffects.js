@@ -34,11 +34,13 @@ export const useGameBoardEffects = ({
   normalizedBoardSize,
   normalizedTimeControl,
   onAuthIdentity,
+  onExpandedLocalAIMove,
   opponentType,
   players,
   refs,
   resetMatchState,
   roomData,
+  shouldRunExpandedLocalAI = true,
   setters,
   timeControl,
   winner,
@@ -186,7 +188,7 @@ export const useGameBoardEffects = ({
   }, [board, boardRef])
 
   useEffect(() => {
-    if (!isExpandedLocalGame || gameOver || isMakingMoveRef.current || currentLocalPlayer?.type !== 'ai') {
+    if (!isExpandedLocalGame || !shouldRunExpandedLocalAI || gameOver || isMakingMoveRef.current || currentLocalPlayer?.type !== 'ai') {
       return undefined
     }
 
@@ -212,7 +214,10 @@ export const useGameBoardEffects = ({
         })
 
         if (move) {
-          applyLocalMove(move.row, move.col, currentLocalPlayer.token)
+          const didApplyMove = applyLocalMove(move.row, move.col, currentLocalPlayer.token)
+          if (didApplyMove) {
+            onExpandedLocalAIMove?.(move.row, move.col, currentLocalPlayer.token)
+          }
         }
       } finally {
         if (!isCancelled) {
@@ -225,7 +230,7 @@ export const useGameBoardEffects = ({
     return () => {
       isCancelled = true
     }
-  }, [aiDifficulty, applyLocalMove, boardRef, currentLocalPlayer, currentPlayerRef, gameOver, gameOverRef, isExpandedLocalGame, isMakingMoveRef, localTurnPlayers, normalizedTimeControl, setMoveMakingState])
+  }, [aiDifficulty, applyLocalMove, boardRef, currentLocalPlayer, currentPlayerRef, gameOver, gameOverRef, isExpandedLocalGame, isMakingMoveRef, localTurnPlayers, normalizedTimeControl, onExpandedLocalAIMove, setMoveMakingState, shouldRunExpandedLocalAI])
 
   useEffect(() => {
     gameOverRef.current = gameOver
@@ -279,7 +284,9 @@ export const useGameBoardEffects = ({
   }, [currentPlayer, gameOver, isMakingMoveRef, onTimeUp, secondsLeft, timeoutHandledForTurnRef])
 
   useEffect(() => {
-    if (!isExpandedLocalGame || !gameOver || !winner || localHistorySavedRef.current) {
+    const shouldSaveLocalHistory = isLocalOnlyGame && (!roomData?.roomId || shouldRunExpandedLocalAI)
+
+    if (!shouldSaveLocalHistory || !gameOver || !winner || localHistorySavedRef.current) {
       return undefined
     }
 
@@ -302,13 +309,18 @@ export const useGameBoardEffects = ({
       winningTiles,
       totalMoves,
       startedAt: matchStartedAtRef.current,
+    }).then((response) => {
+      if (!response?.ok) {
+        localHistorySavedRef.current = false
+        console.error('Failed to save local game history:', response?.data?.message || response?.data?.error || 'Unknown error')
+      }
     }).catch((error) => {
       localHistorySavedRef.current = false
       console.error('Failed to save local game history:', error)
     })
 
     return undefined
-  }, [board, gameOver, isExpandedLocalGame, localHistorySavedRef, localTurnPlayers, matchStartedAtRef, normalizedBoardSize, normalizedTimeControl, players, winner, winningTiles])
+  }, [board, gameOver, isLocalOnlyGame, localHistorySavedRef, localTurnPlayers, matchStartedAtRef, normalizedBoardSize, normalizedTimeControl, players, roomData?.roomId, shouldRunExpandedLocalAI, winner, winningTiles])
 
   useEffect(() => {
     if (!gameOver || !roomData?._id || roomCleanupDoneRef.current) {
@@ -316,7 +328,10 @@ export const useGameBoardEffects = ({
     }
 
     roomCleanupDoneRef.current = true
-    gameroomService.deleteRoom(roomData._id).catch(() => {})
+    gameroomService.deleteRoom(roomData._id).catch((error) => {
+      roomCleanupDoneRef.current = false
+      console.error('Failed to delete finished room:', error)
+    })
     return undefined
   }, [gameOver, roomData, roomCleanupDoneRef])
 

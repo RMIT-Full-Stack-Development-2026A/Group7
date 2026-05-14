@@ -1,5 +1,5 @@
 const gameroomService = require('./gameroom.service')
-const gameService = require('../game/game.service')
+const { emitGameroomEvent } = require('../../socket/gameroom.socket')
 const {
   toAddGameroomPlayerInput,
   toCreateGameroomInput,
@@ -10,15 +10,18 @@ const {
 } = require('./gameroom.dto')
 const { ErrorResponse } = require('../../shared/errors/AppErrors')
 
+const shouldEmitPlayersChanged = (room) => room?.$locals?.gameroomPlayersChanged !== false
+
 const createGameroom = async (req, res, next) => {
   try {
     const userId = req.user?.userId || req.user?.id || req.body.userId
 
     const room = await gameroomService.createGameroom(userId, toCreateGameroomInput(req.body))
+    const roomResponse = toGameroomResponse(room)
 
     res.status(201).json({
       ok: true,
-      data: toGameroomResponse(room),
+      data: roomResponse,
     })
   } catch (error) {
     next(error)
@@ -71,10 +74,14 @@ const updateGameroomSettings = async (req, res, next) => {
       req.params.id,
       toUpdateGameroomSettingsInput(req.body)
     )
+    const roomResponse = toGameroomResponse(room)
+    if (shouldEmitPlayersChanged(room)) {
+      emitGameroomEvent(room.roomId, 'room-updated', roomResponse)
+    }
 
     res.json({
       ok: true,
-      data: toGameroomResponse(room),
+      data: roomResponse,
     })
   } catch (error) {
     next(error)
@@ -87,10 +94,14 @@ const updateGameroomPlayers = async (req, res, next) => {
       req.params.id,
       toUpdateGameroomPlayersInput(req.body)
     )
+    const roomResponse = toGameroomResponse(room)
+    if (shouldEmitPlayersChanged(room)) {
+      emitGameroomEvent(room.roomId, 'room-updated', roomResponse)
+    }
 
     res.json({
       ok: true,
-      data: toGameroomResponse(room),
+      data: roomResponse,
     })
   } catch (error) {
     next(error)
@@ -99,14 +110,25 @@ const updateGameroomPlayers = async (req, res, next) => {
 
 const addPlayerToGameroom = async (req, res, next) => {
   try {
+    const authenticatedUserId = req.user?.userId || req.user?.id
+    const playerInput = toAddGameroomPlayerInput(req.body)
     const room = await gameroomService.addPlayerToGameroom(
       req.params.id,
-      toAddGameroomPlayerInput(req.body)
+      authenticatedUserId
+        ? {
+          ...playerInput,
+          userId: String(authenticatedUserId),
+        }
+        : playerInput
     )
+    const roomResponse = toGameroomResponse(room)
+    if (shouldEmitPlayersChanged(room)) {
+      emitGameroomEvent(room.roomId, 'room-updated', roomResponse)
+    }
 
     res.json({
       ok: true,
-      data: toGameroomResponse(room),
+      data: roomResponse,
     })
   } catch (error) {
     next(error)
@@ -117,10 +139,14 @@ const removePlayerFromGameroom = async (req, res, next) => {
   try {
     const userId = req.user?.userId || req.user?.id || req.body.userId
     const room = await gameroomService.removePlayerFromGameroom(req.params.id, userId)
+    const roomResponse = toGameroomResponse(room)
+    if (shouldEmitPlayersChanged(room)) {
+      emitGameroomEvent(room.roomId, 'room-updated', roomResponse)
+    }
 
     res.json({
       ok: true,
-      data: toGameroomResponse(room),
+      data: roomResponse,
     })
   } catch (error) {
     next(error)
@@ -136,17 +162,30 @@ const startGameroom = async (req, res, next) => {
       return next(new ErrorResponse('Only host can start the game', 403))
     }
 
-    const playerIds = room.players.map((player) => player.userId || player._id).filter(Boolean)
-    const gameSession = await gameService.createGameSession(req.params.id, playerIds)
+    const activePlayers = room.players.filter(Boolean)
+    const humanPlayers = activePlayers.filter((player) => player.type !== 'ai')
 
-    await gameroomService.updateGameroomStatus(req.params.id, 'in-battle')
+    if (activePlayers.length < 2) {
+      return next(new ErrorResponse('Add one more player or AI before starting the game.', 400))
+    }
+
+    if (humanPlayers.length === 0) {
+      return next(new ErrorResponse('At least one human player is required to start the game.', 400))
+    }
+
+    const updatedRoom = await gameroomService.updateGameroomStatus(req.params.id, 'in-battle')
+    const startResponse = toStartGameroomResponse({
+      room: updatedRoom,
+      gameSession: null,
+    })
+    emitGameroomEvent(updatedRoom.roomId, 'game-started', {
+      startTime: new Date(),
+      payload: startResponse,
+    })
 
     res.json({
       ok: true,
-      data: toStartGameroomResponse({
-        room,
-        gameSession,
-      }),
+      data: startResponse,
     })
   } catch (error) {
     next(error)
@@ -157,16 +196,17 @@ const deleteGameroom = async (req, res, next) => {
   try {
     const userId = req.user?.userId || req.user?.id || req.body.userId
     const room = await gameroomService.getGameroomById(req.params.id)
-
     if (String(room.host) !== String(userId)) {
       return next(new ErrorResponse('Only host can delete the room', 403))
     }
 
     const deletedRoom = await gameroomService.deleteGameroom(req.params.id)
+    const roomResponse = toGameroomResponse(deletedRoom)
+    emitGameroomEvent(deletedRoom.roomId, 'room-deleted', roomResponse)
 
     res.json({
       ok: true,
-      data: toGameroomResponse(deletedRoom),
+      data: roomResponse,
     })
   } catch (error) {
     next(error)

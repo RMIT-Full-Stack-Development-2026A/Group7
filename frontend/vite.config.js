@@ -8,6 +8,19 @@ export default defineConfig({
 
   server: {
     port: 3000,
-    hot: true
+    host: '0.0.0.0',
+    allowedHosts: ['.loca.lt', '.trycloudflare.com', '.ngrok-free.app'],
+    hot: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:4000',
+        changeOrigin: true,
+      },
+      '/socket.io': {
+        target: 'http://localhost:4000',
+        changeOrigin: true,
+        ws: true,
+      },
+    },
   }
 })

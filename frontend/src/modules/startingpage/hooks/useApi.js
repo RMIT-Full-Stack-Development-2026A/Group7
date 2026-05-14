@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
+import { getBackendOrigin } from '../../../config/api/baseUrl.js';
 
-const BACKEND_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api').replace(/\/api$/, '');
+const BACKEND_URL = getBackendOrigin();
 
 /**
  * Custom hook for making API calls to the backend
@@ -23,11 +24,11 @@ export const useApi = () => {
         ...options,
       });
 
+      const data = await response.json();
       if (!response.ok) {
-        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+        throw new Error(data?.message || data?.error || `API Error: ${response.status} ${response.statusText}`);
       }
 
-      const data = await response.json();
       return data;
     } catch (err) {
       const errorMessage = err.message || 'Failed to fetch data';

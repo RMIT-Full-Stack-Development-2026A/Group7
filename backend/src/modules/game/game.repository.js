@@ -54,7 +54,8 @@ const findHistoryByPlayer = (userId, limit = 50, skip = 0) => {
   return Game.find({
     $or: [
       { 'players.X.playerId': userId },
-      { 'players.O.playerId': userId }
+      { 'players.O.playerId': userId },
+      { 'participants.playerId': userId }
     ],
     status: 'completed'
   })

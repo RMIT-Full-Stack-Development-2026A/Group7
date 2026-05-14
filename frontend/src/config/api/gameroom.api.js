@@ -1,4 +1,6 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api';
+import { getApiBaseUrl } from './baseUrl.js';
+
+const API_BASE_URL = getApiBaseUrl();
 const ROOM_BASE_PATH = '/gameroom';
 
 export const gameroomApi = {

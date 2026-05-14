@@ -1,8 +1,9 @@
 import MamboAvatar from '../assets/images/Mambo.png'
+import { getBackendOrigin } from '../../config/api/baseUrl.js'
 
 export const AI_AVATAR = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRdDSVVP_wL7wjVO9MdHRFNITzjGa_LYBJNgA&s'
 
-const BACKEND_ORIGIN = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api').replace(/\/api$/, '')
+const BACKEND_ORIGIN = getBackendOrigin()
 
 export const resolveAvatarUrl = (avatar, { isAI = false, fallbackToDefault = true } = {}) => {
   if (!avatar || avatar === 'Mambo.png') {
@@ -35,8 +36,14 @@ export const resolveAvatarUrl = (avatar, { isAI = false, fallbackToDefault = tru
   return `${BACKEND_ORIGIN}/${avatar.replace(/^\/+/, '')}`
 }
 
-export const getRawAvatarValue = (avatar) => (
-  avatar === MamboAvatar ? '' : (avatar || '')
-)
+export const getRawAvatarValue = (avatar = '') => {
+  const value = String(avatar || '')
+
+  if (!value || value === MamboAvatar || value.includes('/assets/Mambo') || value.includes('\\assets\\Mambo')) {
+    return ''
+  }
+
+  return value
+}
 
 export { MamboAvatar }

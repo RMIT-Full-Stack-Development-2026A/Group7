@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useLocation }    from 'react-router-dom'
 import { validateLoginForm }           from '../modules/ValidationHandler'
 import { loginPlayer }                 from '../services/authService'
@@ -8,23 +8,26 @@ export const useLogin = () => {
   const [loading,     setLoading]     = useState(false)
   const [serverError, setServerError] = useState('')
   const [lockInfo,    setLockInfo]    = useState({ attempts: 0, locked: false, secondsLeft: 0 })
-  const timerRef = useRef(null)
   const navigate = useNavigate()
   const location = useLocation()
   const successMessage = location.state?.message || ''
 
   useEffect(() => {
-    if (lockInfo.locked && lockInfo.secondsLeft > 0) {
-      timerRef.current = setInterval(() => {
-        setLockInfo(prev => {
-          const next = prev.secondsLeft - 1
-          if (next <= 0) { clearInterval(timerRef.current); return { attempts: 0, locked: false, secondsLeft: 0 } }
-          return { ...prev, secondsLeft: next }
-        })
-      }, 1000)
+    if (!lockInfo.locked || lockInfo.secondsLeft <= 0) {
+      return undefined
     }
-    return () => clearInterval(timerRef.current)
-  }, [lockInfo.locked])
+
+    const timer = setTimeout(() => {
+      setLockInfo(prev => {
+        const next = prev.secondsLeft - 1
+        return next <= 0
+          ? { attempts: 0, locked: false, secondsLeft: 0 }
+          : { ...prev, secondsLeft: next }
+      })
+    }, 1000)
+
+    return () => clearTimeout(timer)
+  }, [lockInfo.locked, lockInfo.secondsLeft])
 
   const handleLogin = async (values, setErrors) => {
     if (lockInfo.locked) return

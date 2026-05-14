@@ -16,11 +16,22 @@ const normalizeBoardSize = (value) => {
   return parsed === 15 ? 15 : 10
 }
 
-const shuffleArray = (items) => {
+const createSeededRandom = (seedValue) => {
+  let seed = String(seedValue || 'tictactoang')
+    .split('')
+    .reduce((total, character) => total + character.charCodeAt(0), 0)
+
+  return () => {
+    seed = (seed * 9301 + 49297) % 233280
+    return seed / 233280
+  }
+}
+
+const shuffleArray = (items, random = Math.random) => {
   const nextItems = [...items]
 
   for (let index = nextItems.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(Math.random() * (index + 1))
+    const swapIndex = Math.floor(random() * (index + 1))
     const currentItem = nextItems[index]
     nextItems[index] = nextItems[swapIndex]
     nextItems[swapIndex] = currentItem
@@ -44,6 +55,10 @@ const buildFallbackPlayers = (payload) => {
 }
 
 const createTurnSelection = (payload) => {
+  if (payload.turnSelection) {
+    return payload.turnSelection
+  }
+
   const room = payload.roomState?.createdRoom || null
   const roomPlayers = Array.isArray(room?.players) && room.players.length > 0
     ? room.players
@@ -51,9 +66,10 @@ const createTurnSelection = (payload) => {
   const playerCount = roomPlayers.length
   const markers = getMarkerSymbols(room?.gameSettings?.marker, playerCount)
   const isClassicTwoPlayerMarkers = playerCount === 2 && markers[0] === 'X' && markers[1] === 'O'
+  const random = createSeededRandom(`${room?.roomId || payload.roomId || 'local'}:${playerCount}:${markers.join('|')}`)
 
   if (isClassicTwoPlayerMarkers) {
-    const randomizedPlayers = shuffleArray(roomPlayers)
+    const randomizedPlayers = shuffleArray(roomPlayers, random)
     const assignments = {
       X: {
         userId: randomizedPlayers[0]?.userId || randomizedPlayers[0]?._id || null,
@@ -88,8 +104,8 @@ const createTurnSelection = (payload) => {
     }
   }
 
-  const randomizedPlayers = shuffleArray(roomPlayers)
-  const randomizedMarkers = shuffleArray(markers)
+  const randomizedPlayers = shuffleArray(roomPlayers, random)
+  const randomizedMarkers = shuffleArray(markers, random)
   const turns = randomizedPlayers.map((player, index) => ({
     order: index + 1,
     userId: player?.userId || player?._id || null,

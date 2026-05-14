@@ -1,9 +1,10 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ROUTES from '../../../router/routes.config.js'
 import { getEmptyTiles, getWinningTiles } from '../../../shared/utils/game.utils.js'
 import { gameAPI } from '../../../config/api/game.api.js'
 import { getStoredAuthIdentity } from '../../gameroom/utils/authIdentity.js'
+import { gameroomSocketService } from '../../gameroom/services/gameroomSocketService.js'
 import {
   getLocalMarkerDisplayByToken,
   getLocalPlayerByToken,
@@ -41,6 +42,7 @@ export function useGameBoard({
   const navigate = useNavigate()
   const [authIdentity, setAuthIdentity] = useState(() => getStoredAuthIdentity())
   const isAIGame = gameMode === 'singleplayer' && opponentType === 'ai'
+  const isRoomMultiplayerGame = !isAIGame && Boolean(roomData?.roomId)
   const isLocalOnlyGame = gameMode === 'local' || !isAIGame
   const { localTurnPlayers, isExpandedLocalGame, normalizedBoardSize, baseBoardSize, boardStyleVariant } = useMemo(
     () => getLocalTurnState({ roomData, turnSelection, boardSize, isLocalOnlyGame }),
@@ -52,6 +54,10 @@ export function useGameBoard({
     () => getResolvedPlayers({ roomData, isAIGame, aiDifficulty, turnSelection, authIdentity, humanSymbol }),
     [aiDifficulty, authIdentity, humanSymbol, isAIGame, roomData, turnSelection]
   )
+  const isRoomHost = useMemo(() => {
+    const viewerId = authIdentity?.userId || authIdentity?.id
+    return Boolean(viewerId && roomData?.host && String(viewerId) === String(roomData.host))
+  }, [authIdentity?.id, authIdentity?.userId, roomData?.host])
   const markerDisplayBySymbol = useMemo(() => getMarkerDisplayBySymbol(players), [players])
   const localMarkerDisplayByToken = useMemo(() => getLocalMarkerDisplayByToken(localTurnPlayers), [localTurnPlayers])
   const localPlayerByToken = useMemo(() => getLocalPlayerByToken(localTurnPlayers), [localTurnPlayers])
@@ -65,7 +71,26 @@ export function useGameBoard({
     const desiredDelay = AI_DELAY_BY_DIFFICULTY_MS[aiDifficulty] || AI_DELAY_BY_DIFFICULTY_MS.medium
     return Math.min(desiredDelay, normalizedTimeControl * 1000)
   }, [aiDifficulty, normalizedTimeControl])
-  const viewerSymbol = useMemo(() => (isAIGame ? humanSymbol : null), [humanSymbol, isAIGame])
+  const viewerSymbol = useMemo(() => {
+    if (isAIGame) {
+      return humanSymbol
+    }
+
+    const viewerId = authIdentity?.userId || authIdentity?.id
+    if (!viewerId) {
+      return null
+    }
+
+    if (players.X?.userId && String(players.X.userId) === String(viewerId)) {
+      return 'X'
+    }
+
+    if (players.O?.userId && String(players.O.userId) === String(viewerId)) {
+      return 'O'
+    }
+
+    return null
+  }, [authIdentity?.id, authIdentity?.userId, humanSymbol, isAIGame, players.O?.userId, players.X?.userId])
   const currentLocalPlayer = useMemo(
     () => (isExpandedLocalGame ? localPlayerByToken[state.currentPlayer] || localTurnPlayers[0] || null : null),
     [state.currentPlayer, isExpandedLocalGame, localPlayerByToken, localTurnPlayers]
@@ -80,8 +105,12 @@ export function useGameBoard({
       viewerId && String(player.id || player.userId) === String(viewerId)
     ))
 
+    if (isRoomMultiplayerGame) {
+      return viewerPlayer?.token || null
+    }
+
     return viewerPlayer?.token || localTurnPlayers.find((player) => player.type !== 'ai')?.token || localTurnPlayers[0]?.token || null
-  }, [authIdentity?.id, authIdentity?.userId, isExpandedLocalGame, localTurnPlayers])
+  }, [authIdentity?.id, authIdentity?.userId, isExpandedLocalGame, isRoomMultiplayerGame, localTurnPlayers])
   const playerOrder = useMemo(() => (isExpandedLocalGame ? localTurnPlayers : []), [isExpandedLocalGame, localTurnPlayers])
   const winnerPresentation = useMemo(
     () => getWinnerPresentation({ resultTone: state.resultTone, winner: state.winner, isExpandedLocalGame, localPlayerByToken, players }),
@@ -134,6 +163,87 @@ export function useGameBoard({
     return true
   }, [isExpandedLocalGame, localTurnPlayers, refs.boardRef, refs.hasLocalProgressRef, resolveResultToneFromSymbol, setters, state.board])
 
+  const emitRoomMove = useCallback((row, col, player) => {
+    if (!isRoomMultiplayerGame || !roomData?.roomId) {
+      return
+    }
+
+    gameroomSocketService.emit('game-move', {
+      roomId: roomData.roomId,
+      row,
+      col,
+      player,
+    })
+  }, [isRoomMultiplayerGame, roomData?.roomId])
+
+  const applyResignationResult = useCallback(({ winner, resignedBy }) => {
+    if (!winner || refs.gameOverRef.current) {
+      return
+    }
+
+    setters.setShowGiveUpConfirm(false)
+    setters.setShowSettingsMenu(false)
+    setters.setMoveMakingState(false)
+    setters.setGameOver(true)
+    setters.setWinningTiles([])
+    setters.setShowWinAnimation(false)
+    setters.setWinner(winner)
+    setters.setResultTone(resolveResultToneFromSymbol(winner))
+    setters.setShowPopup(true)
+
+    refs.gameOverRef.current = true
+
+    if (resignedBy) {
+      console.info(`Player ${resignedBy} resigned. ${winner} wins.`)
+    }
+  }, [refs.gameOverRef, resolveResultToneFromSymbol, setters])
+
+  const emitRoomResignation = useCallback((winner, resignedBy) => {
+    if (!isRoomMultiplayerGame || !roomData?.roomId) {
+      return
+    }
+
+    gameroomSocketService.emit('game-action', {
+      roomId: roomData.roomId,
+      action: 'player-resigned',
+      payload: {
+        winner,
+        resignedBy,
+      },
+    })
+  }, [isRoomMultiplayerGame, roomData?.roomId])
+
+  useEffect(() => {
+    if (!isRoomMultiplayerGame || !roomData?.roomId) {
+      return undefined
+    }
+
+    const viewerId = authIdentity?.userId || authIdentity?.id || 'anonymous'
+    const viewerName = authIdentity?.name || authIdentity?.username || 'Player'
+    gameroomSocketService.joinRoom({
+      roomId: roomData.roomId,
+      playerId: viewerId,
+      playerName: viewerName,
+    })
+
+    const unsubscribeMove = gameroomSocketService.on('game-move-applied', ({ row, col, player }) => {
+      if (Number.isInteger(row) && Number.isInteger(col) && player) {
+        applyLocalMove(row, col, player)
+      }
+    })
+    const unsubscribeAction = gameroomSocketService.on('game-action', ({ action, payload } = {}) => {
+      if (action === 'player-resigned') {
+        applyResignationResult(payload || {})
+      }
+    })
+
+    return () => {
+      unsubscribeMove()
+      unsubscribeAction()
+      gameroomSocketService.leaveRoom(roomData.roomId)
+    }
+  }, [applyLocalMove, applyResignationResult, authIdentity, isRoomMultiplayerGame, roomData?.roomId])
+
   const skipCurrentTurn = useCallback(() => {
     if (state.gameOver) {
       return
@@ -174,11 +284,13 @@ export function useGameBoard({
     normalizedBoardSize,
     normalizedTimeControl,
     onAuthIdentity: setAuthIdentity,
+    onExpandedLocalAIMove: emitRoomMove,
     opponentType,
     players,
     refs,
     resetMatchState: resetCurrentMatchState,
     roomData,
+    shouldRunExpandedLocalAI: !isRoomMultiplayerGame || isRoomHost,
     setters: {
       ...setters,
       onTimeUp: skipCurrentTurn,
@@ -193,9 +305,17 @@ export function useGameBoard({
   const closeSettingsMenu = () => { setters.setShowGiveUpConfirm(false); setters.setShowSettingsMenu(false) }
 
   const handleGiveUp = async () => {
+    const resignedBy = isExpandedLocalGame
+      ? (viewerLocalToken || (!isRoomMultiplayerGame ? state.currentPlayer : null))
+      : (viewerSymbol || (!isRoomMultiplayerGame ? state.currentPlayer : null))
+
+    if (!resignedBy || state.gameOver) {
+      return
+    }
+
     const opponentSymbol = isExpandedLocalGame
-      ? getNextLocalPlayerToken(state.currentPlayer, isExpandedLocalGame, localTurnPlayers)
-      : (viewerSymbol ? (viewerSymbol === 'X' ? 'O' : 'X') : (state.currentPlayer === 'X' ? 'O' : 'X'))
+      ? getNextLocalPlayerToken(resignedBy, isExpandedLocalGame, localTurnPlayers)
+      : (resignedBy === 'X' ? 'O' : 'X')
 
     setters.setShowGiveUpConfirm(false)
     setters.setShowSettingsMenu(false)
@@ -208,16 +328,27 @@ export function useGameBoard({
       }
     }
 
-    setters.setGameOver(true)
-    setters.setWinningTiles([])
-    setters.setShowWinAnimation(false)
-    setters.setWinner(opponentSymbol)
-    setters.setResultTone('lose')
-    setters.setShowPopup(true)
+    applyResignationResult({
+      winner: opponentSymbol,
+      resignedBy,
+    })
+    emitRoomResignation(opponentSymbol, resignedBy)
   }
 
   const handleTileClick = async (row, col) => {
     if (refs.isMakingMoveRef.current || state.gameOver || (isAIGame && state.currentPlayer !== humanSymbol) || state.board[row]?.[col]) {
+      return
+    }
+
+    if (isExpandedLocalGame && currentLocalPlayer?.type !== 'ai') {
+      if (isRoomMultiplayerGame || viewerLocalToken) {
+        if (state.currentPlayer !== viewerLocalToken) {
+          return
+        }
+      }
+    }
+
+    if (isRoomMultiplayerGame && !isExpandedLocalGame && state.currentPlayer !== viewerSymbol) {
       return
     }
 
@@ -235,7 +366,10 @@ export function useGameBoard({
         return
       }
 
-      applyLocalMove(row, col, state.currentPlayer)
+      const didApplyMove = applyLocalMove(row, col, state.currentPlayer)
+      if (didApplyMove) {
+        emitRoomMove(row, col, state.currentPlayer)
+      }
     } catch (error) {
       if (!isAIGame) {
         applyLocalMove(row, col, state.currentPlayer)

@@ -19,6 +19,8 @@ function GameroomPage() {
     messages,
     friends,
     isCurrentUserHost,
+    canStartGame,
+    startGameDisabledReason,
     handleCreateRoom,
     handleAddAI,
     handleRemoveAI,
@@ -75,7 +77,8 @@ function GameroomPage() {
         {isCurrentUserHost ? (
           <StartGameButton
             isHost={true}
-            disabled={false}
+            disabled={!canStartGame}
+            title={startGameDisabledReason || 'Start game'}
             onClick={handleStartGame}
           />
         ) : null}

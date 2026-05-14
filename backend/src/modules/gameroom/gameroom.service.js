@@ -39,6 +39,23 @@ const buildHostPlayerFromUser = (user) => {
   }
 }
 
+const setPlayersChanged = (room, changed) => {
+  if (room?.$locals) {
+    room.$locals.gameroomPlayersChanged = Boolean(changed)
+  }
+}
+
+const normalizePlayerForCompare = (player = {}) => ({
+  userId: String(player.userId || ''),
+  name: String(player.name || ''),
+  avatar: String(player.avatar || ''),
+  type: player.type || 'human',
+  aiDifficulty: player.aiDifficulty || '',
+})
+
+const arePlayerListsEqual = (currentPlayers = [], nextPlayers = []) =>
+  JSON.stringify(currentPlayers.map(normalizePlayerForCompare)) === JSON.stringify(nextPlayers.map(normalizePlayerForCompare))
+
 const findUserByIdentity = async ({ userId, username, email } = {}) => {
   const filters = []
 
@@ -60,15 +77,30 @@ const ensureHostPlayerPresent = async (room) => {
   }
 
   const hostUserId = String(room.host)
+  const hostUser = await User.findById(hostUserId).lean().catch(() => null)
+  const hostPlayer = buildHostPlayerFromUser(hostUser)
   const hasHostPlayer = Array.isArray(room.players)
     && room.players.some((player) => String(player?.userId) === hostUserId)
 
-  if (hasHostPlayer) {
+  if (Array.isArray(room.players) && hasHostPlayer) {
+    const hostName = String(hostPlayer?.name || '').trim().toLowerCase()
+    const originalLength = room.players.length
+    room.players = room.players.filter((player) => {
+      if (String(player?.userId) === hostUserId) {
+        return true
+      }
+
+      const playerName = String(player?.name || '').trim().toLowerCase()
+      return !(hostName && playerName === hostName && player?.type !== 'ai')
+    })
+
+    if (room.players.length !== originalLength) {
+      await room.save()
+      setPlayersChanged(room, true)
+    }
+
     return room
   }
-
-  const hostUser = await User.findById(hostUserId).lean().catch(() => null)
-  const hostPlayer = buildHostPlayerFromUser(hostUser)
 
   if (!hostPlayer) {
     return room
@@ -76,6 +108,7 @@ const ensureHostPlayerPresent = async (room) => {
 
   room.players = [hostPlayer, ...(Array.isArray(room.players) ? room.players : [])].slice(0, room.size)
   await room.save()
+  setPlayersChanged(room, true)
 
   return room
 }
@@ -173,8 +206,16 @@ const updateGameroomPlayers = async (roomId, players) => {
     }
   }
 
-  room.players = nextPlayers.slice(0, room.size)
+  nextPlayers = nextPlayers.slice(0, room.size)
+
+  if (arePlayerListsEqual(room.players || [], nextPlayers)) {
+    setPlayersChanged(room, false)
+    return ensureHostPlayerPresent(room)
+  }
+
+  room.players = nextPlayers
   await room.save()
+  setPlayersChanged(room, true)
 
   return ensureHostPlayerPresent(room)
 }
@@ -182,10 +223,17 @@ const updateGameroomPlayers = async (roomId, players) => {
 const addPlayerToGameroom = async (roomId, playerData) => {
   const room = await getGameroomById(roomId)
   const incomingUserId = playerData?.userId ? String(playerData.userId) : null
+  const hostUserId = room.host ? String(room.host) : null
 
   if (incomingUserId) {
+    if (hostUserId && incomingUserId === hostUserId) {
+      setPlayersChanged(room, false)
+      return ensureHostPlayerPresent(room)
+    }
+
     const existingPlayer = room.players.find((player) => String(player.userId) === incomingUserId)
     if (existingPlayer) {
+      setPlayersChanged(room, false)
       return room
     }
   }
@@ -196,6 +244,7 @@ const addPlayerToGameroom = async (roomId, playerData) => {
 
   room.players.push(playerData)
   await room.save()
+  setPlayersChanged(room, true)
 
   return ensureHostPlayerPresent(room)
 }
@@ -209,11 +258,20 @@ const removePlayerFromGameroom = async (roomId, userId) => {
   }
 
   if (String(room.host) === normalizedUserId) {
+    setPlayersChanged(room, false)
     return room
   }
 
-  room.players = (room.players || []).filter((player) => String(player?.userId) !== normalizedUserId)
+  const nextPlayers = (room.players || []).filter((player) => String(player?.userId) !== normalizedUserId)
+
+  if (arePlayerListsEqual(room.players || [], nextPlayers)) {
+    setPlayersChanged(room, false)
+    return room
+  }
+
+  room.players = nextPlayers
   await room.save()
+  setPlayersChanged(room, true)
 
   return ensureHostPlayerPresent(room)
 }

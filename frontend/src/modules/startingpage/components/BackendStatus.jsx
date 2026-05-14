@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Check, X, Loader } from 'lucide-react';
+import { getApiBaseUrl } from '../../../config/api/baseUrl.js';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api';
+const API_BASE_URL = getApiBaseUrl();
 
 const BackendStatus = () => {
   const [status, setStatus] = useState('checking'); // 'checking', 'connected', 'disconnected'

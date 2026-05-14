@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { createElement, useEffect, useMemo, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Mail, Settings as SettingsIcon, Users, BookOpen, Swords, Sparkles, ShieldCheck, Check, X, Maximize2 } from 'lucide-react';
 import ROUTES from '../../../router/routes.config';
 import { useApi } from '../hooks/useApi';
 import { httpHelper } from '../../../services/httpHelper.js';
+import { getApiBaseUrl } from '../../../config/api/baseUrl.js';
 import { getStoredAuthIdentity } from '../../gameroom/utils/authIdentity.js';
 import { resolveAvatarUrl } from '../../../shared/utils/avatar.utils.js';
 
@@ -11,8 +12,8 @@ export function MainMenu() {
   const { call } = useApi();
   const [sidebarTab, setSidebarTab] = useState('friends');
   const [playerProfile, setPlayerProfile] = useState(null);
+  const [storedIdentity, setStoredIdentity] = useState(getStoredAuthIdentity);
   const [recentMatch, setRecentMatch] = useState(null);
-  const storedIdentity = getStoredAuthIdentity();
   const defaultProfileAvatar = resolveAvatarUrl('');
 
   const handleAvatarLoadError = (event) => {
@@ -71,6 +72,24 @@ export function MainMenu() {
   }, [call, storedIdentity.userId]);
 
   useEffect(() => {
+    const handleProfileUpdated = (event) => {
+      setStoredIdentity(getStoredAuthIdentity());
+
+      if (event.detail?.profile) {
+        setPlayerProfile(event.detail.profile);
+      }
+    };
+
+    window.addEventListener('profile-updated', handleProfileUpdated);
+    window.addEventListener('storage', handleProfileUpdated);
+
+    return () => {
+      window.removeEventListener('profile-updated', handleProfileUpdated);
+      window.removeEventListener('storage', handleProfileUpdated);
+    };
+  }, []);
+
+  useEffect(() => {
     let isMounted = true;
 
     const fetchRecentMatch = async () => {
@@ -78,7 +97,7 @@ export function MainMenu() {
         return;
       }
 
-      const response = await httpHelper.get(`${(import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api')}/games/user/history?userId=${encodeURIComponent(storedIdentity.userId)}&limit=1`);
+      const response = await httpHelper.get(`${getApiBaseUrl()}/games/user/history?userId=${encodeURIComponent(storedIdentity.userId)}&limit=1`);
       const historyGames = response?.data?.data?.games || [];
 
       if (!isMounted) {
@@ -97,8 +116,8 @@ export function MainMenu() {
 
   const playerData = useMemo(() => ({
     name: playerProfile?.name || storedIdentity.name || storedIdentity.username || 'Player',
-    isAdmin: (playerProfile?.role || '').toLowerCase() === 'admin',
-    isPremium: Boolean(playerProfile?.premiumStatus),
+    isAdmin: ((playerProfile?.role || storedIdentity.role || '')).toLowerCase() === 'admin',
+    isPremium: Boolean(playerProfile?.premiumStatus ?? storedIdentity.premiumStatus ?? storedIdentity.isPremium),
     profilePic: resolveAvatarUrl(playerProfile?.avatarUrl || storedIdentity.avatar),
   }), [
     playerProfile?.avatarUrl,
@@ -106,7 +125,10 @@ export function MainMenu() {
     playerProfile?.premiumStatus,
     playerProfile?.role,
     storedIdentity.avatar,
+    storedIdentity.isPremium,
     storedIdentity.name,
+    storedIdentity.premiumStatus,
+    storedIdentity.role,
     storedIdentity.username,
   ]);
 
@@ -203,7 +225,7 @@ export function MainMenu() {
                 className="neon-icon-button relative p-4 transition-colors group"
                 aria-label={label}
               >
-                <Icon className="w-6 h-6 text-slate-300 group-hover:text-white transition-colors" />
+                {createElement(Icon, { className: 'w-6 h-6 text-slate-300 group-hover:text-white transition-colors' })}
                 {badge ? <span className="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full border-2 border-slate-900"></span> : null}
               </NavLink>
             ))}

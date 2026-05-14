@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { gameroomService } from '../services/gameroomService.js';
+import { gameroomSocketService } from '../services/gameroomSocketService.js';
 import { getStoredAuthIdentity, resolveAuthIdentity } from '../utils/authIdentity.js';
 import ROUTES from '../../../router/routes.config.js';
-import { AI_AVATAR, getRawAvatarValue, resolveAvatarUrl } from '../../../shared/utils/avatar.utils.js';
+import { AI_AVATAR, getRawAvatarValue } from '../../../shared/utils/avatar.utils.js';
 
 const DEFAULT_FRIENDS = [
   {
@@ -96,8 +97,8 @@ const mapRoomPlayersToSlots = (room, authIdentity = null) => {
       id: slotIndex + 1,
       name: player?.type === 'ai' ? normalizedAIName : normalizedHumanName,
       avatar: player?.type === 'ai'
-        ? resolveAvatarUrl(player?.avatar || AI_AVATAR, { isAI: true })
-        : resolveAvatarUrl(humanIdentity?.avatar),
+        ? (player?.avatar || AI_AVATAR)
+        : (humanIdentity?.avatar || ''),
       isHost: Boolean(isHostPlayer),
       type: player.type || 'human',
       aiDifficulty: player.aiDifficulty,
@@ -150,6 +151,43 @@ const normalizeRoomPlayersForSync = (players = []) =>
     ...(player.aiDifficulty ? { aiDifficulty: player.aiDifficulty } : {}),
   }));
 
+const normalizeSlotsForCompare = (players = []) =>
+  players.map((player) => (
+    player
+      ? {
+        id: player.id,
+        name: player.name,
+        avatar: getRawAvatarValue(player.avatar),
+        isHost: Boolean(player.isHost),
+        type: player.type || 'human',
+        aiDifficulty: player.aiDifficulty || '',
+        userId: player.userId || '',
+      }
+      : null
+  ));
+
+const arePlayerSlotsEqual = (currentPlayers, nextPlayers) =>
+  JSON.stringify(normalizeSlotsForCompare(currentPlayers)) === JSON.stringify(normalizeSlotsForCompare(nextPlayers));
+
+const normalizeRoomForCompare = (room) => {
+  if (!room) {
+    return null;
+  }
+
+  return {
+    id: String(room._id || room.id || ''),
+    roomId: String(room.roomId || ''),
+    host: String(room.host || ''),
+    size: Number(room.size) || 0,
+    status: room.status || '',
+    gameSettings: room.gameSettings || {},
+    players: normalizeRoomPlayersForSync(room.players || []),
+  };
+};
+
+const areRoomPayloadsEqual = (currentRoom, nextRoom) =>
+  JSON.stringify(normalizeRoomForCompare(currentRoom)) === JSON.stringify(normalizeRoomForCompare(nextRoom));
+
 export function useGameroomPage() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -161,8 +199,13 @@ export function useGameroomPage() {
   const [friends] = useState(DEFAULT_FRIENDS);
   const [returnToRoute, setReturnToRoute] = useState(location.state?.returnTo || '/createroom');
   const [hasHydratedRoomPlayers, setHasHydratedRoomPlayers] = useState(false);
+  const roomDataRef = useRef(null);
 
-  const buildGameStartPayload = (room, roomPlayers) => {
+  useEffect(() => {
+    roomDataRef.current = roomData;
+  }, [roomData]);
+
+  const buildGameStartPayload = useCallback((room, roomPlayers) => {
     const settings = room?.gameSettings || {};
     const rawBoardSize = typeof settings.boardSize === 'number'
       ? settings.boardSize
@@ -188,7 +231,7 @@ export function useGameroomPage() {
         hasHumanOpponent,
       },
     };
-  };
+  }, [returnToRoute]);
 
   useEffect(() => {
     let isMounted = true;
@@ -279,7 +322,10 @@ export function useGameroomPage() {
         return;
       }
 
-      setPlayers(mapRoomPlayersToSlots(roomData, authIdentity));
+      const nextPlayers = mapRoomPlayersToSlots(roomData, authIdentity);
+      setPlayers((currentPlayers) => (
+        arePlayerSlotsEqual(currentPlayers, nextPlayers) ? currentPlayers : nextPlayers
+      ));
       setHasHydratedRoomPlayers(true);
     }, 0);
 
@@ -306,7 +352,9 @@ export function useGameroomPage() {
     const syncPlayers = async () => {
       try {
         const updatedRoom = await gameroomService.updateRoomPlayers(roomData._id, nextRoomPlayers);
-        setRoomData(updatedRoom);
+        setRoomData((currentRoom) => (
+          areRoomPayloadsEqual(currentRoom, updatedRoom) ? currentRoom : updatedRoom
+        ));
       } catch (error) {
         console.error('Error syncing room players:', error);
       }
@@ -314,6 +362,72 @@ export function useGameroomPage() {
 
     syncPlayers();
   }, [authIdentity, hasHydratedRoomPlayers, players, roomData]);
+
+  useEffect(() => {
+    const activeRoomId = roomData?.roomId;
+
+    if (!activeRoomId) {
+      return undefined;
+    }
+
+    const playerId = authIdentity?.userId || authIdentity?.id || 'anonymous';
+    const playerName = authIdentity?.name || authIdentity?.username || 'Player';
+
+    gameroomSocketService.joinRoom({
+      roomId: activeRoomId,
+      playerId,
+      playerName,
+    });
+
+    const unsubscribeRoomUpdated = gameroomSocketService.on('room-updated', (updatedRoom) => {
+      if (String(updatedRoom?.roomId) === String(activeRoomId)) {
+        setRoomData((currentRoom) => (
+          areRoomPayloadsEqual(currentRoom, updatedRoom) ? currentRoom : updatedRoom
+        ));
+      }
+    });
+    const unsubscribeRoomDeleted = gameroomSocketService.on('room-deleted', (deletedRoom) => {
+      if (String(deletedRoom?.roomId) === String(activeRoomId)) {
+        setRoomData(null);
+        resetRoom();
+        navigate(returnToRoute);
+      }
+    });
+    const unsubscribeGameStarted = gameroomSocketService.on('game-started', ({ payload } = {}) => {
+      const currentRoomData = roomDataRef.current;
+
+      if (!payload && !currentRoomData) {
+        return;
+      }
+
+      const startedRoom = payload?.room || payload?.roomState?.createdRoom || currentRoomData;
+      if (String(startedRoom?.roomId) !== String(activeRoomId)) {
+        return;
+      }
+
+      const target = buildGameStartPayload(startedRoom, mapRoomPlayersToSlots(startedRoom, authIdentity).filter(Boolean));
+      navigate(ROUTES.GAME_LOADING, {
+        state: {
+          targetRoute: target.route,
+          targetState: target.state,
+        },
+      });
+    });
+
+    return () => {
+      unsubscribeRoomUpdated();
+      unsubscribeRoomDeleted();
+      unsubscribeGameStarted();
+      gameroomSocketService.leaveRoom(activeRoomId);
+    };
+  }, [
+    authIdentity,
+    buildGameStartPayload,
+    navigate,
+    resetRoom,
+    returnToRoute,
+    roomData?.roomId,
+  ]);
 
   const handleSendMessage = (message) => {
     setMessages((prevMessages) => [
@@ -331,7 +445,7 @@ export function useGameroomPage() {
     console.log('Invited friend:', friend?.name);
   };
 
-  const handleStartGame = () => {
+  const handleStartGame = async () => {
     if (!roomData) {
       return;
     }
@@ -355,19 +469,21 @@ export function useGameroomPage() {
     };
 
     const target = buildGameStartPayload(nextRoom, activePlayers);
-    navigate(ROUTES.GAME_LOADING, {
-      state: {
-        targetRoute: target.route,
-        targetState: target.state,
-      },
-    });
+    try {
+      if (roomData._id) {
+        await gameroomService.updateRoomPlayers(roomData._id, nextRoom.players);
+        await gameroomService.startRoom(roomData._id);
+      }
 
-    if (roomData._id) {
-      window.setTimeout(() => {
-        gameroomService.startRoom(roomData._id).catch((error) => {
-          console.error('Error starting room:', error);
-        });
-      }, 0);
+      navigate(ROUTES.GAME_LOADING, {
+        state: {
+          targetRoute: target.route,
+          targetState: target.state,
+        },
+      });
+    } catch (error) {
+      console.error('Error starting room:', error);
+      alert(error.message || 'Could not start the room.');
     }
   };
 
@@ -402,6 +518,12 @@ export function useGameroomPage() {
   const isCurrentUserHost = Boolean(
     authIdentity?.userId && roomData?.host && String(authIdentity.userId) === String(roomData.host)
   );
+  const activePlayers = players.filter(Boolean);
+  const canStartGame = activePlayers.length >= 2
+    && activePlayers.some((player) => player.type !== 'ai');
+  const startGameDisabledReason = canStartGame
+    ? ''
+    : 'Add one more player or AI before starting the game.';
 
   return {
     roomSize,
@@ -410,6 +532,8 @@ export function useGameroomPage() {
     messages,
     friends,
     isCurrentUserHost,
+    canStartGame,
+    startGameDisabledReason,
     handleCreateRoom,
     handleAddAI,
     handleRemoveAI,

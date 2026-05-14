@@ -4,7 +4,7 @@ import { ArrowLeft, CalendarClock, Crown, Globe, ShieldCheck, UserRound } from '
 import { useApi } from '../hooks/useApi';
 import ROUTES from '../../../router/routes.config.js';
 import { getStoredAuthIdentity } from '../../gameroom/utils/authIdentity.js';
-import { COUNTRIES } from '../../register/elements/CountryDropdown.jsx';
+import { COUNTRIES } from '../../register/constants/countries.js';
 import { validateCountry, validateEmail } from '../../register/modules/ValidationHandler.js';
 import { getRawAvatarValue, resolveAvatarUrl } from '../../../shared/utils/avatar.utils.js';
 
@@ -13,6 +13,42 @@ function formatDate(value) {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? 'Not set' : date.toLocaleString();
 }
+
+const AVATAR_MAX_SIZE = 512;
+const AVATAR_QUALITY = 0.82;
+
+const resizeAvatarFile = (file) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+
+  reader.onload = () => {
+    const image = new Image();
+
+    image.onload = () => {
+      const scale = Math.min(1, AVATAR_MAX_SIZE / Math.max(image.width, image.height));
+      const width = Math.max(1, Math.round(image.width * scale));
+      const height = Math.max(1, Math.round(image.height * scale));
+      const canvas = document.createElement('canvas');
+
+      canvas.width = width;
+      canvas.height = height;
+
+      const context = canvas.getContext('2d');
+      if (!context) {
+        reject(new Error('Could not prepare avatar image.'));
+        return;
+      }
+
+      context.drawImage(image, 0, 0, width, height);
+      resolve(canvas.toDataURL('image/jpeg', AVATAR_QUALITY));
+    };
+
+    image.onerror = () => reject(new Error('Could not load avatar image.'));
+    image.src = typeof reader.result === 'string' ? reader.result : '';
+  };
+
+  reader.onerror = () => reject(new Error('Failed to read that image file.'));
+  reader.readAsDataURL(file);
+});
 
 export function Profile() {
   const { call, loading } = useApi();
@@ -118,12 +154,23 @@ export function Profile() {
           avatarUrl: nextProfile.avatarUrl || '',
         });
         setAvatarPreview(resolveAvatarUrl(nextProfile.avatarUrl) || avatarPreview);
-        localStorage.setItem('authUser', JSON.stringify({
+        const nextAuthUser = {
           ...(getStoredAuthIdentity() || {}),
           id: nextProfile.userId,
           name: nextProfile.name || nextProfile.username || '',
           username: nextProfile.username || '',
+          email: nextProfile.email || '',
           avatar: getRawAvatarValue(nextProfile.avatarUrl || ''),
+          role: nextProfile.role,
+          isPremium: Boolean(nextProfile.premiumStatus),
+          premiumStatus: Boolean(nextProfile.premiumStatus),
+        };
+        localStorage.setItem('authUser', JSON.stringify(nextAuthUser));
+        window.dispatchEvent(new CustomEvent('profile-updated', {
+          detail: {
+            authUser: nextAuthUser,
+            profile: nextProfile,
+          },
         }));
         setSaveMessageTone('success');
         setSaveMessage('Profile updated successfully.');
@@ -139,24 +186,20 @@ export function Profile() {
     }
   };
 
-  const handleAvatarChange = (event) => {
+  const handleAvatarChange = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const nextAvatar = typeof reader.result === 'string' ? reader.result : '';
+    try {
+      const nextAvatar = await resizeAvatarFile(file);
       setAvatarPreview(nextAvatar || defaultProfileAvatar);
       setFormState((current) => ({ ...current, avatarUrl: getRawAvatarValue(nextAvatar) }));
       setSaveMessageTone('info');
       setSaveMessage('Avatar preview updated. Save to keep the change.');
-    };
-    reader.onerror = () => {
+    } catch (error) {
       setSaveMessageTone('error');
-      setSaveMessage('Failed to read that image file. Please try another one.');
-    };
-
-    reader.readAsDataURL(file);
+      setSaveMessage(error.message || 'Failed to read that image file. Please try another one.');
+    }
   };
 
   return (
@@ -200,7 +243,10 @@ export function Profile() {
                   <div className="neon-stat-grid mt-6">
                     {statusItems.map(({ label, value, icon: Icon }) => (
                       <div key={label} className="neon-stat-pill text-left">
-                        <span className="neon-stat-icon profile-stat-icon">
+                        <span
+                          className="neon-stat-icon profile-stat-icon"
+                          data-icon-name={Icon.displayName || Icon.name}
+                        >
                           <Icon size={16} />
                         </span>
                         <div>
