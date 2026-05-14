@@ -12,6 +12,7 @@ const {
   updateGameroomPlayers,
   updateGameroomSettings,
 } = require('./gameroom.controller')
+const { authenticate } = require('../../middleware/authMiddleware')
 const {
   validateCreateGameroomRequest,
   validateUpdateGameroomSettingsRequest,
@@ -41,7 +42,8 @@ router.get('/:id', getGameroomById)
 router.patch('/:id/settings', optionalAuthenticate, validateUpdateGameroomSettingsRequest, updateGameroomSettings)
 router.patch('/:id/players', optionalAuthenticate, updateGameroomPlayers)
 router.post('/:id/player', optionalAuthenticate, addPlayerToGameroom)
-router.delete('/:id/player', optionalAuthenticate, removePlayerFromGameroom)
+// Self-leave only: dùng userId từ JWT, không cho client truyền userId trong body.
+router.delete('/:id/player', authenticate, removePlayerFromGameroom)
 router.post('/:id/start', optionalAuthenticate, startGameroom)
 router.delete('/:id', optionalAuthenticate, deleteGameroom)
 

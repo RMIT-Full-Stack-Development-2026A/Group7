@@ -1,14 +1,18 @@
 const User = require('../modules/auth/auth.model')
 
 const bruteForce = async (req, res, next) => {
-  const { identifier } = req.body
+  // Phòng trường hợp client gửi identifier không phải string (number/object/null)
+  // -> identifier.toLowerCase() throw làm middleware 500.
+  const rawIdentifier = req.body?.identifier
+  if (typeof rawIdentifier !== 'string') return next()
+  const identifier = rawIdentifier.trim()
   if (!identifier) return next()
 
   try {
     const user = await User.findOne({
       $or: [
-        { email: identifier.toLowerCase().trim() },
-        { username: identifier.trim() },
+        { email: identifier.toLowerCase() },
+        { username: identifier },
       ],
     })
 

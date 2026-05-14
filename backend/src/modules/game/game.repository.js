@@ -144,16 +144,11 @@ const addMoveToGame = async (gameId, moveData) => {
  * @param {Object} resultData - Result data { winner, winReason, winningTiles }
  */
 const completeGame = async (gameId, resultData) => {
-  console.log('🔍 completeGame called with:', { gameId, resultData });
-  
   const game = await findByGameId(gameId);
   if (!game) {
-    console.log('❌ Game not found:', gameId);
     return null;
   }
-  
-  console.log('📝 Found game, updating status...');
-  
+
   game.status = 'completed';
   game.result = {
     winner: resultData.winner,
@@ -162,11 +157,8 @@ const completeGame = async (gameId, resultData) => {
     totalMoves: game.moves.length
   };
   game.completedAt = new Date();
-  
-  const savedGame = await game.save();
-  console.log('✅ Game saved to MongoDB!', savedGame.gameId);
-  
-  return savedGame;
+
+  return game.save();
 };
 
 /**

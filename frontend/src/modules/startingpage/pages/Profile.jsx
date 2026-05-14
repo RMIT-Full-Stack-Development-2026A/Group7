@@ -17,6 +17,28 @@ function formatDate(value) {
 const AVATAR_MAX_SIZE = 512;
 const AVATAR_QUALITY = 0.82;
 
+const buildProfileFromStoredIdentity = () => {
+  const identity = getStoredAuthIdentity();
+
+  if (!identity?.userId && !identity?.username && !identity?.email) {
+    return null;
+  }
+
+  return {
+    userId: identity.userId || identity.id || '',
+    name: identity.name || identity.username || 'Player',
+    username: identity.username || '',
+    email: identity.email || '',
+    country: identity.country || '',
+    role: identity.role || 'player',
+    premiumStatus: Boolean(identity.premiumStatus ?? identity.isPremium),
+    subscriptionEndDate: identity.subscriptionEndDate || null,
+    isActive: true,
+    avatarUrl: identity.avatar || '',
+    createdAt: null,
+  };
+};
+
 const resizeAvatarFile = (file) => new Promise((resolve, reject) => {
   const reader = new FileReader();
 
@@ -76,17 +98,18 @@ export function Profile() {
     const fetchProfile = async () => {
       setIsLoadingProfile(true);
       try {
-        const data = await call(`/api/profile?userId=${userId}`);
-        if (data) {
-          setProfile(data);
+        const data = await call(`/profile?userId=${encodeURIComponent(userId)}`);
+        const nextProfile = data || buildProfileFromStoredIdentity();
+        if (nextProfile) {
+          setProfile(nextProfile);
           setFormState({
-            name: data.name || data.username || '',
-            username: data.username || '',
-            email: data.email || '',
-            country: data.country || '',
-            avatarUrl: data.avatarUrl || '',
+            name: nextProfile.name || nextProfile.username || '',
+            username: nextProfile.username || '',
+            email: nextProfile.email || '',
+            country: nextProfile.country || '',
+            avatarUrl: nextProfile.avatarUrl || '',
           });
-          setAvatarPreview(resolveAvatarUrl(data.avatarUrl));
+          setAvatarPreview(resolveAvatarUrl(nextProfile.avatarUrl));
         }
       } catch (err) {
         console.error('Failed to fetch profile from database:', err);
@@ -138,7 +161,7 @@ export function Profile() {
         userId,
       };
 
-      const result = await call('/api/profile', {
+      const result = await call('/profile', {
         method: 'PUT',
         body: JSON.stringify(updatedProfile),
       });

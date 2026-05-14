@@ -1,13 +1,29 @@
 const express = require('express');
+const jwt = require('jsonwebtoken');
 const profileController = require('./profile.controller');
 
 const router = express.Router();
 
-router.get('/', profileController.getProfile);
-router.put('/', profileController.updateProfile);
-router.get('/settings', profileController.getSettings);
-router.put('/settings', profileController.updateSettings);
-router.get('/mailbox', profileController.getMailbox);
-router.post('/subscription', profileController.manageSubscription);
+const optionalAuthenticate = (req, _res, next) => {
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+
+  if (token) {
+    try {
+      req.user = jwt.verify(token, process.env.JWT_SECRET);
+    } catch {
+      req.user = null;
+    }
+  }
+
+  next();
+};
+
+router.get('/', optionalAuthenticate, profileController.getProfile);
+router.put('/', optionalAuthenticate, profileController.updateProfile);
+router.get('/settings', optionalAuthenticate, profileController.getSettings);
+router.put('/settings', optionalAuthenticate, profileController.updateSettings);
+router.get('/mailbox', optionalAuthenticate, profileController.getMailbox);
+router.post('/subscription', optionalAuthenticate, profileController.manageSubscription);
 
 module.exports = router;

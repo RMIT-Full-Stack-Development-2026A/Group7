@@ -158,7 +158,7 @@ const GameSchema = new mongoose.Schema({
   },
   gameMode: {
     type: String,
-    enum: ['singleplayer', 'multiplayer', 'local', 'ai'],
+    enum: ['singleplayer', 'multiplayer', 'local'],
     required: true
   },
   timeControl: {

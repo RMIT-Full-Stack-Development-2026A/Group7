@@ -1,7 +1,8 @@
 import { useState, useCallback } from 'react';
-import { getBackendOrigin } from '../../../config/api/baseUrl.js';
+import { getApiBaseUrl } from '../../../config/api/baseUrl.js';
 
-const BACKEND_URL = getBackendOrigin();
+const API_BASE_URL = getApiBaseUrl();
+const normalizeEndpoint = (endpoint = '') => `/${String(endpoint).replace(/^\/+/, '').replace(/^api\/?/, '')}`;
 
 /**
  * Custom hook for making API calls to the backend
@@ -16,9 +17,10 @@ export const useApi = () => {
     setError(null);
 
     try {
-      const response = await fetch(`${BACKEND_URL}${endpoint}`, {
+      const response = await fetch(`${API_BASE_URL}${normalizeEndpoint(endpoint)}`, {
         headers: {
           'Content-Type': 'application/json',
+          ...(localStorage.getItem('token') ? { Authorization: `Bearer ${localStorage.getItem('token')}` } : {}),
           ...options.headers,
         },
         ...options,

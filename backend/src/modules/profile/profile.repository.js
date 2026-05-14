@@ -39,9 +39,15 @@ const findUserByIdentifier = async (identifier) => {
 }
 
 const ensureUserByIdentifier = async (identifier) => {
-  const seededUser = await ensureProfileSeedData()
   const matchedUser = await findUserByIdentifier(identifier)
-  return matchedUser || seededUser
+
+  if (!matchedUser) {
+    const err = new Error('User not found.')
+    err.statusCode = 404
+    throw err
+  }
+
+  return matchedUser
 }
 
 const getProfileByUserId = async (userId) => {
@@ -124,6 +130,21 @@ const upsertSubscriptionByUserId = async (userId, subscriptionData) => {
     },
     { new: true, runValidators: true }
   )
+  const endDateText = subscriptionData.subscriptionEndDate
+    ? new Date(subscriptionData.subscriptionEndDate).toLocaleDateString('en', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    })
+    : 'the next billing date'
+
+  await MailboxMessage.create({
+    userId: user._id,
+    from: 'billing@tictactoang.local',
+    subject: 'Premium subscription payment processed',
+    message: `Your $10 USD monthly premium subscription payment was successfully processed. Premium access is active until ${endDateText}.`,
+    read: false,
+  })
 
   return {
     success: true,

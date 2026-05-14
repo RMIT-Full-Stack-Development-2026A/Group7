@@ -206,18 +206,28 @@ const updateGameroomPlayers = async (roomId, players) => {
     }
   }
 
-  nextPlayers = nextPlayers.slice(0, room.size)
+  const nextPlayerUserIds = new Set(nextPlayers.map((player) => String(player?.userId || '')).filter(Boolean))
+  const preservedHumanGuests = (room.players || []).filter((player) => {
+    const playerUserId = String(player?.userId || '')
+    return player?.type !== 'ai'
+      && playerUserId
+      && playerUserId !== hostUserId
+      && !nextPlayerUserIds.has(playerUserId)
+  })
+
+  nextPlayers = [...nextPlayers, ...preservedHumanGuests].slice(0, room.size)
 
   if (arePlayerListsEqual(room.players || [], nextPlayers)) {
     setPlayersChanged(room, false)
     return ensureHostPlayerPresent(room)
   }
 
-  room.players = nextPlayers
-  await room.save()
-  setPlayersChanged(room, true)
+  const updatedRoom = await gameroomRepository.updateGameroomById(roomId, {
+    players: nextPlayers,
+  })
+  setPlayersChanged(updatedRoom, true)
 
-  return ensureHostPlayerPresent(room)
+  return ensureHostPlayerPresent(updatedRoom)
 }
 
 const addPlayerToGameroom = async (roomId, playerData) => {

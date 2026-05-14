@@ -13,14 +13,12 @@ class CreateGameDTO {
   }
 
   validate() {
-     console.log('🔍 Validating gameMode:', this.gameMode);
     const validGameModes = ['singleplayer', 'multiplayer', 'local'];
     const validBoardSizes = [10, 15];
     const validOpponentTypes = ['ai', 'human'];
     const validAIDifficulties = ['easy', 'medium', 'hard'];
 
     if (!validGameModes.includes(this.gameMode)) {
-      console.log('❌ Invalid gameMode:', this.gameMode, 'Valid modes:', validGameModes);
       throw new Error(`Invalid gameMode. Must be one of: ${validGameModes.join(', ')}`);
     }
 

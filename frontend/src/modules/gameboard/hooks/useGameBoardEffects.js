@@ -96,6 +96,11 @@ export const useGameBoardEffects = ({
 
     let isCancelled = false
 
+    // Block người chơi click ô cho đến khi server đã tạo xong game session.
+    // Trước đây user click sớm sẽ làm local progress, response về bị bỏ qua
+    // -> server có game mồ côi + client mất sync.
+    setMoveMakingState(true)
+
     const initRemoteGame = async () => {
       try {
         const remotePlayers = buildRemotePlayerPayloads({
@@ -139,14 +144,20 @@ export const useGameBoardEffects = ({
           setGameId(null)
           console.error('Failed to initialize backend game session:', error)
         }
+      } finally {
+        if (!isCancelled) {
+          setMoveMakingState(false)
+        }
       }
     }
 
     initRemoteGame()
     return () => {
       isCancelled = true
+      // Cleanup: nếu effect tear down giữa chừng vẫn cần unlock board.
+      setMoveMakingState(false)
     }
-  }, [aiDifficulty, aiSymbol, authIdentity, gameMode, hasLocalProgressRef, humanSymbol, isLocalOnlyGame, localTurnPlayers, normalizedBoardSize, opponentType, players, resetMatchState, roomData, setCurrentPlayer, setGameId, setUseRemoteSession, timeControl])
+  }, [aiDifficulty, aiSymbol, authIdentity, gameMode, hasLocalProgressRef, humanSymbol, isLocalOnlyGame, localTurnPlayers, normalizedBoardSize, opponentType, players, resetMatchState, roomData, setCurrentPlayer, setGameId, setMoveMakingState, setUseRemoteSession, timeControl])
 
   useEffect(() => {
     if (!(isAIGame && currentPlayer === aiSymbol && !gameOver && !isMakingMoveRef.current)) {

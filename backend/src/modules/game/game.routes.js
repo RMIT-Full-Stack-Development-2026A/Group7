@@ -1,5 +1,7 @@
 const express = require('express')
 const gameController = require('./game.controller')
+const { authenticate } = require('../../middleware/authMiddleware')
+const { authorizeAdmin } = require('../../middleware/roleMiddleware')
 const {
   validateCreateGameRequest,
   validateJoinGameRequest,
@@ -26,7 +28,8 @@ router.post('/:gameId/resign', validateResignGameRequest, gameController.resignG
 router.get('/:gameId/replay', validateGetGameRequest, gameController.getGameReplay)
 router.get('/:gameId', validateGetGameRequest, gameController.getGame)
 
-router.delete('/admin/:gameId', gameController.deleteGame)
-router.post('/admin/cleanup', gameController.cleanupGames)
+// Admin-only maintenance routes.
+router.delete('/admin/:gameId', authenticate, authorizeAdmin, gameController.deleteGame)
+router.post('/admin/cleanup', authenticate, authorizeAdmin, gameController.cleanupGames)
 
 module.exports = router

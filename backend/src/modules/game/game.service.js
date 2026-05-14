@@ -26,7 +26,7 @@ const createNewGame = async (gameData) => {
     throw new Error('Both players are required')
   }
 
-  if (!['singleplayer', 'multiplayer', 'local', 'ai'].includes(gameMode)) {
+  if (!['singleplayer', 'multiplayer', 'local'].includes(gameMode)) {
     throw new Error('Invalid game mode')
   }
 

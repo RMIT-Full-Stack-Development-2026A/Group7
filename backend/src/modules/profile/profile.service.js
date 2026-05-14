@@ -41,7 +41,14 @@ const manageUserSubscription = async (userId, subscriptionData) => {
     profileDto.toSubscriptionDto(subscriptionData)
   )
 
-  return profileRepository.upsertSubscriptionByUserId(validatedUserId, validatedSubscription)
+  const result = await profileRepository.upsertSubscriptionByUserId(validatedUserId, validatedSubscription)
+
+  return {
+    success: result.success,
+    premiumStatus: result.premiumStatus,
+    subscriptionEndDate: result.subscriptionEndDate,
+    profile: profileDto.toProfileResponse(result.user),
+  }
 }
 
 module.exports = {

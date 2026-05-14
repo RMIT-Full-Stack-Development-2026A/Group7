@@ -4,6 +4,7 @@ import { getSocketBaseUrl } from '../../../config/api/baseUrl.js'
 const SOCKET_BASE_URL = getSocketBaseUrl()
 
 let socket = null
+let joinedRoom = null
 
 const getSocket = () => {
   if (!socket) {
@@ -23,6 +24,23 @@ const getSocket = () => {
 
 const joinRoom = ({ roomId, playerId, playerName }) => {
   const activeSocket = getSocket()
+  const nextJoinedRoom = {
+    roomId: String(roomId || ''),
+    playerId: String(playerId || ''),
+    playerName: String(playerName || ''),
+  }
+
+  if (
+    joinedRoom &&
+    joinedRoom.roomId === nextJoinedRoom.roomId &&
+    joinedRoom.playerId === nextJoinedRoom.playerId &&
+    joinedRoom.playerName === nextJoinedRoom.playerName &&
+    activeSocket.connected
+  ) {
+    return activeSocket
+  }
+
+  joinedRoom = nextJoinedRoom
   activeSocket.emit('join-room', { roomId, playerId, playerName })
   return activeSocket
 }
@@ -30,6 +48,10 @@ const joinRoom = ({ roomId, playerId, playerName }) => {
 const leaveRoom = (roomId) => {
   if (socket?.connected && roomId) {
     socket.emit('leave-room', { roomId })
+  }
+
+  if (joinedRoom?.roomId === String(roomId || '')) {
+    joinedRoom = null
   }
 }
 

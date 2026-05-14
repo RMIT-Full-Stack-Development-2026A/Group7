@@ -90,9 +90,10 @@ const updateGameroomSettings = async (req, res, next) => {
 
 const updateGameroomPlayers = async (req, res, next) => {
   try {
+    const requestedPlayers = toUpdateGameroomPlayersInput(req.body)
     const room = await gameroomService.updateGameroomPlayers(
       req.params.id,
-      toUpdateGameroomPlayersInput(req.body)
+      requestedPlayers
     )
     const roomResponse = toGameroomResponse(room)
     if (shouldEmitPlayersChanged(room)) {
@@ -137,7 +138,9 @@ const addPlayerToGameroom = async (req, res, next) => {
 
 const removePlayerFromGameroom = async (req, res, next) => {
   try {
-    const userId = req.user?.userId || req.user?.id || req.body.userId
+    // Bắt buộc dùng userId từ token (authenticate middleware đã verify).
+    // Không cho phép body.userId override để chặn việc kick người khác.
+    const userId = req.user?.userId || req.user?.id
     const room = await gameroomService.removePlayerFromGameroom(req.params.id, userId)
     const roomResponse = toGameroomResponse(room)
     if (shouldEmitPlayersChanged(room)) {
@@ -156,10 +159,15 @@ const removePlayerFromGameroom = async (req, res, next) => {
 const startGameroom = async (req, res, next) => {
   try {
     const userId = req.user?.userId || req.user?.id || req.body.userId
-    const room = await gameroomService.getGameroomById(req.params.id)
+    let room = await gameroomService.getGameroomById(req.params.id)
 
     if (String(room.host) !== String(userId)) {
       return next(new ErrorResponse('Only host can start the game', 403))
+    }
+
+    const requestedPlayers = toUpdateGameroomPlayersInput(req.body)
+    if (Array.isArray(requestedPlayers)) {
+      room = await gameroomService.updateGameroomPlayers(req.params.id, requestedPlayers)
     }
 
     const activePlayers = room.players.filter(Boolean)

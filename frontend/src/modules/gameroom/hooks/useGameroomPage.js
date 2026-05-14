@@ -199,11 +199,16 @@ export function useGameroomPage() {
   const [friends] = useState(DEFAULT_FRIENDS);
   const [returnToRoute, setReturnToRoute] = useState(location.state?.returnTo || '/createroom');
   const [hasHydratedRoomPlayers, setHasHydratedRoomPlayers] = useState(false);
+  const [isStartingGame, setIsStartingGame] = useState(false);
   const roomDataRef = useRef(null);
+  const hasLocalSlotChangesRef = useRef(false);
 
   useEffect(() => {
     roomDataRef.current = roomData;
   }, [roomData]);
+
+  const currentUserId = authIdentity?.userId || authIdentity?.id || 'anonymous';
+  const currentUserName = authIdentity?.name || authIdentity?.username || 'Player';
 
   const buildGameStartPayload = useCallback((room, roomPlayers) => {
     const settings = room?.gameSettings || {};
@@ -265,6 +270,7 @@ export function useGameroomPage() {
   }, [authIdentity]);
 
   const handleAddAI = (slotIndex, difficulty) => {
+    hasLocalSlotChangesRef.current = true;
     setPlayers((currentPlayers) => {
       const nextPlayers = [...currentPlayers];
       nextPlayers[slotIndex] = {
@@ -288,6 +294,7 @@ export function useGameroomPage() {
         return prevPlayers;
       }
 
+      hasLocalSlotChangesRef.current = true;
       nextPlayers[slotIndex] = null;
       return nextPlayers;
     });
@@ -337,6 +344,10 @@ export function useGameroomPage() {
       return;
     }
 
+    if (!hasLocalSlotChangesRef.current) {
+      return;
+    }
+
     if (!authIdentity?.userId || String(authIdentity.userId) !== String(roomData.host)) {
       return;
     }
@@ -352,6 +363,7 @@ export function useGameroomPage() {
     const syncPlayers = async () => {
       try {
         const updatedRoom = await gameroomService.updateRoomPlayers(roomData._id, nextRoomPlayers);
+        hasLocalSlotChangesRef.current = false;
         setRoomData((currentRoom) => (
           areRoomPayloadsEqual(currentRoom, updatedRoom) ? currentRoom : updatedRoom
         ));
@@ -370,13 +382,10 @@ export function useGameroomPage() {
       return undefined;
     }
 
-    const playerId = authIdentity?.userId || authIdentity?.id || 'anonymous';
-    const playerName = authIdentity?.name || authIdentity?.username || 'Player';
-
     gameroomSocketService.joinRoom({
       roomId: activeRoomId,
-      playerId,
-      playerName,
+      playerId: currentUserId,
+      playerName: currentUserName,
     });
 
     const unsubscribeRoomUpdated = gameroomSocketService.on('room-updated', (updatedRoom) => {
@@ -421,8 +430,9 @@ export function useGameroomPage() {
       gameroomSocketService.leaveRoom(activeRoomId);
     };
   }, [
-    authIdentity,
     buildGameStartPayload,
+    currentUserId,
+    currentUserName,
     navigate,
     resetRoom,
     returnToRoute,
@@ -446,7 +456,7 @@ export function useGameroomPage() {
   };
 
   const handleStartGame = async () => {
-    if (!roomData) {
+    if (!roomData || isStartingGame) {
       return;
     }
 
@@ -468,13 +478,23 @@ export function useGameroomPage() {
       players: mapSlotsToRoomPlayers(players, roomData),
     };
 
-    const target = buildGameStartPayload(nextRoom, activePlayers);
+    setIsStartingGame(true);
     try {
+      let startedRoom = nextRoom;
+
       if (roomData._id) {
-        await gameroomService.updateRoomPlayers(roomData._id, nextRoom.players);
-        await gameroomService.startRoom(roomData._id);
+        const currentRoomPlayers = JSON.stringify(normalizeRoomPlayersForSync(roomData.players));
+        const nextRoomPlayers = JSON.stringify(normalizeRoomPlayersForSync(nextRoom.players));
+
+        if (currentRoomPlayers !== nextRoomPlayers) {
+          startedRoom = await gameroomService.updateRoomPlayers(roomData._id, nextRoom.players);
+        }
+
+        const startPayload = await gameroomService.startRoom(roomData._id, nextRoom.players);
+        startedRoom = startPayload?.room || startedRoom;
       }
 
+      const target = buildGameStartPayload(startedRoom, mapRoomPlayersToSlots(startedRoom, authIdentity).filter(Boolean));
       navigate(ROUTES.GAME_LOADING, {
         state: {
           targetRoute: target.route,
@@ -484,6 +504,8 @@ export function useGameroomPage() {
     } catch (error) {
       console.error('Error starting room:', error);
       alert(error.message || 'Could not start the room.');
+    } finally {
+      setIsStartingGame(false);
     }
   };
 
@@ -532,7 +554,7 @@ export function useGameroomPage() {
     messages,
     friends,
     isCurrentUserHost,
-    canStartGame,
+    canStartGame: canStartGame && !isStartingGame,
     startGameDisabledReason,
     handleCreateRoom,
     handleAddAI,

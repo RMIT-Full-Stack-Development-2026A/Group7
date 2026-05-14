@@ -91,30 +91,6 @@ export const resolveAuthIdentity = async () => {
   };
 
   try {
-    const usersResponse = await fetch(`${API_BASE_URL}/users`, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-    });
-    const usersPayload = await usersResponse.json().catch(() => []);
-    const users = Array.isArray(usersPayload) ? usersPayload : usersPayload?.data || [];
-    const matchedUser = users.find((user) => (
-      (storedIdentity.userId && String(user._id || user.id) === String(storedIdentity.userId))
-      || (storedIdentity.username && user.username === storedIdentity.username)
-      || (storedIdentity.email && user.email === storedIdentity.email)
-    ));
-
-    if (matchedUser) {
-      const resolvedIdentity = normalizeIdentity(matchedUser);
-      persistIdentity(resolvedIdentity);
-      return resolvedIdentity;
-    }
-  } catch {
-    // Fall through to profile/stored identity.
-  }
-
-  try {
     const profileUrl = storedIdentity.userId
       ? `${API_BASE_URL}/profile?userId=${encodeURIComponent(storedIdentity.userId)}`
       : `${API_BASE_URL}/profile`;

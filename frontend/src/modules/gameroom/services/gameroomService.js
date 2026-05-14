@@ -58,6 +58,20 @@ const normalizeRoomPayload = (room) => {
   };
 };
 
+const normalizeStartPayload = (payload) => {
+  if (!payload?.room) {
+    return {
+      room: normalizeRoomPayload(payload),
+      gameSession: null,
+    };
+  }
+
+  return {
+    ...payload,
+    room: normalizeRoomPayload(payload.room),
+  };
+};
+
 export const gameroomService = {
   async listRooms() {
     const rooms = await fetch(gameroomApi.rooms).then(parseJsonResponse);
@@ -119,13 +133,13 @@ export const gameroomService = {
     return normalizeRoomPayload(room);
   },
 
-  async startRoom(roomId) {
-    const room = await fetch(
+  async startRoom(roomId, players) {
+    const payload = await fetch(
       gameroomApi.roomStart(roomId),
-      buildJsonRequest('POST', withCurrentUser()),
+      buildJsonRequest('POST', withCurrentUser(players ? { players } : {})),
     ).then(parseJsonResponse);
 
-    return normalizeRoomPayload(room);
+    return normalizeStartPayload(payload);
   },
 
   async deleteRoom(roomId) {

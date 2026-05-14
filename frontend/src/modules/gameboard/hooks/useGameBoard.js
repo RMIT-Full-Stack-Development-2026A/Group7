@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ROUTES from '../../../router/routes.config.js'
 import { getEmptyTiles, getWinningTiles } from '../../../shared/utils/game.utils.js'
@@ -41,6 +41,8 @@ export function useGameBoard({
 }) {
   const navigate = useNavigate()
   const [authIdentity, setAuthIdentity] = useState(() => getStoredAuthIdentity())
+  const applyLocalMoveRef = useRef(null)
+  const applyResignationResultRef = useRef(null)
   const isAIGame = gameMode === 'singleplayer' && opponentType === 'ai'
   const isRoomMultiplayerGame = !isAIGame && Boolean(roomData?.roomId)
   const isLocalOnlyGame = gameMode === 'local' || !isAIGame
@@ -163,6 +165,10 @@ export function useGameBoard({
     return true
   }, [isExpandedLocalGame, localTurnPlayers, refs.boardRef, refs.hasLocalProgressRef, resolveResultToneFromSymbol, setters, state.board])
 
+  useEffect(() => {
+    applyLocalMoveRef.current = applyLocalMove
+  }, [applyLocalMove])
+
   const emitRoomMove = useCallback((row, col, player) => {
     if (!isRoomMultiplayerGame || !roomData?.roomId) {
       return
@@ -198,6 +204,10 @@ export function useGameBoard({
     }
   }, [refs.gameOverRef, resolveResultToneFromSymbol, setters])
 
+  useEffect(() => {
+    applyResignationResultRef.current = applyResignationResult
+  }, [applyResignationResult])
+
   const emitRoomResignation = useCallback((winner, resignedBy) => {
     if (!isRoomMultiplayerGame || !roomData?.roomId) {
       return
@@ -228,12 +238,12 @@ export function useGameBoard({
 
     const unsubscribeMove = gameroomSocketService.on('game-move-applied', ({ row, col, player }) => {
       if (Number.isInteger(row) && Number.isInteger(col) && player) {
-        applyLocalMove(row, col, player)
+        applyLocalMoveRef.current?.(row, col, player)
       }
     })
     const unsubscribeAction = gameroomSocketService.on('game-action', ({ action, payload } = {}) => {
       if (action === 'player-resigned') {
-        applyResignationResult(payload || {})
+        applyResignationResultRef.current?.(payload || {})
       }
     })
 
@@ -242,7 +252,7 @@ export function useGameBoard({
       unsubscribeAction()
       gameroomSocketService.leaveRoom(roomData.roomId)
     }
-  }, [applyLocalMove, applyResignationResult, authIdentity, isRoomMultiplayerGame, roomData?.roomId])
+  }, [authIdentity?.id, authIdentity?.name, authIdentity?.userId, authIdentity?.username, isRoomMultiplayerGame, roomData?.roomId])
 
   const skipCurrentTurn = useCallback(() => {
     if (state.gameOver) {

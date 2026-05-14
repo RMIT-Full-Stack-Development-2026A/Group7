@@ -339,24 +339,13 @@ const resignGame = asyncHandler(async (req, res) => {
   }, `Player resigned. ${resignedGame.result.winner} wins!`).toJSON())
 })
 
+// authenticate + authorizeAdmin middleware đã guard route này; controller chỉ làm việc.
 const deleteGame = asyncHandler(async (req, res) => {
-  const currentUser = req.user || {}
-
-  if (!currentUser.isAdmin) {
-    return res.status(403).json(new ErrorResponseDTO('Admin access required', 403).toJSON())
-  }
-
   await gameService.deleteGame(req.params.gameId)
   res.status(200).json(new SuccessResponseDTO(null, 'Game deleted successfully').toJSON())
 })
 
 const cleanupGames = asyncHandler(async (req, res) => {
-  const currentUser = req.user || {}
-
-  if (!currentUser.isAdmin) {
-    return res.status(403).json(new ErrorResponseDTO('Admin access required', 403).toJSON())
-  }
-
   const result = await gameService.cleanupAbandonedGames(60)
   res.status(200).json(new SuccessResponseDTO(result, `Cleaned up ${result.cleanedCount} abandoned games`).toJSON())
 })

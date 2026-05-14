@@ -1,6 +1,5 @@
 import { httpHelper } from '../../../services/httpHelper'
 import { ADMIN_API } from '../../../config/api/admin.api'
-import { AUTH_API } from '../../../config/api/auth.api'
 
 const normalizeUsersPayload = (payload, fallbackMeta = {}) => {
   const users = Array.isArray(payload) ? payload : payload?.data || []
@@ -23,21 +22,9 @@ export const fetchUsers = ({ page = 1, limit = 50, q = '' } = {}) => {
 
 export const fetchAllUsers = async ({ q = '', limit = 200 } = {}) => {
   const first = await fetchUsers({ page: 1, limit, q })
-  const firstPayload = normalizeUsersPayload(first.data)
-
-  if (!first.ok && [401, 403].includes(first.status)) {
-    const fallback = await httpHelper.get(AUTH_API.users)
-    if (!fallback.ok) return fallback
-
-    return {
-      ...fallback,
-      data: normalizeUsersPayload(fallback.data),
-    }
-  }
-
   if (!first.ok) return first
 
-  const payload = firstPayload
+  const payload = normalizeUsersPayload(first.data)
   const users = [...(payload.data || [])]
   const total = payload.meta?.total || users.length
   const pageCount = Math.ceil(total / limit)
