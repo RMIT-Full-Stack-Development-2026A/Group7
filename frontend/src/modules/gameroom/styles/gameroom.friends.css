@@ -1,0 +1,280 @@
+
+.online-indicator {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #1a1a2e;
+}
+
+.online-indicator.online {
+  background: #10b981;
+}
+
+.online-indicator.offline {
+  background: #6b7280;
+}
+
+.friend-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.friend-name {
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.friend-status {
+  color: #9ca3af;
+  font-size: 0.75rem;
+  margin: 0;
+}
+
+.btn-invite {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(168, 85, 247, 0.2));
+  border: 1px solid rgba(96, 165, 250, 0.3);
+  color: #60a5fa;
+  padding: 8px;
+  border-radius: 8px;
+  transition: all 0.15s;
+  cursor: pointer;
+}
+
+.btn-invite:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(168, 85, 247, 0.3));
+}
+
+.btn-invite:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-invite i {
+  transition: transform 0.15s;
+}
+
+.btn-invite:hover:not(:disabled) i {
+  transform: scale(1.1);
+}
+
+.host-approval-toast {
+  position: fixed;
+  right: 370px;
+  top: 96px;
+  width: min(360px, calc(100vw - 32px));
+  z-index: 150;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px;
+  border: 1px solid rgba(147, 197, 253, 0.35);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.9);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.35);
+  backdrop-filter: blur(18px);
+}
+
+.host-approval-copy {
+  min-width: 0;
+}
+
+.host-approval-eyebrow {
+  margin: 0 0 3px;
+  color: #93c5fd;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.host-approval-title {
+  margin: 0;
+  color: white;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.host-approval-message {
+  margin: 3px 0 0;
+  color: #cbd5e1;
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.host-approval-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.host-approval-btn {
+  border: 0;
+  border-radius: 8px;
+  padding: 9px 11px;
+  color: white;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s, opacity 0.15s;
+}
+
+.host-approval-btn:hover {
+  transform: translateY(-1px);
+}
+
+.host-approval-btn-approve {
+  background: #2563eb;
+}
+
+.host-approval-btn-refuse {
+  background: rgba(100, 116, 139, 0.65);
+}
+
+@media (max-width: 980px) {
+  .host-approval-toast {
+    right: 16px;
+    top: 88px;
+  }
+}
+
+.content-wrapper {
+  position: relative;
+  z-index: 1;
+}
+
+html[data-app-theme='light'] .game-room-bg {
+  background:
+    radial-gradient(circle at 14% 18%, rgba(144, 177, 255, 0.24), transparent 24%),
+    radial-gradient(circle at 84% 16%, rgba(193, 163, 255, 0.22), transparent 22%),
+    linear-gradient(180deg, #dfe8ff 0%, #d8e3ff 48%, #e5ebff 100%);
+}
+
+html[data-app-theme='light'] .bg-orb-1 {
+  background: rgba(111, 140, 255, 0.16);
+}
+
+html[data-app-theme='light'] .bg-orb-2 {
+  background: rgba(156, 108, 255, 0.14);
+}
+
+html[data-app-theme='light'] .chat-bar,
+html[data-app-theme='light'] .friend-list-panel,
+html[data-app-theme='light'] .difficulty-menu,
+html[data-app-theme='light'] .vs-box,
+html[data-app-theme='light'] .ai-slot-btn,
+html[data-app-theme='light'] .friend-item {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(145, 164, 236, 0.38);
+  box-shadow: 0 18px 36px rgba(108, 127, 201, 0.16);
+}
+
+html[data-app-theme='light'] .top-bar {
+  background:
+    radial-gradient(circle at 50% -30%, rgba(255, 255, 255, 0.72), transparent 44%),
+    radial-gradient(circle at 16% 100%, rgba(144, 177, 255, 0.18), transparent 38%),
+    radial-gradient(circle at 84% 100%, rgba(193, 163, 255, 0.16), transparent 38%),
+    linear-gradient(180deg, rgba(247, 250, 255, 0.72), rgba(226, 234, 255, 0.26) 68%, rgba(226, 234, 255, 0));
+  border-bottom: 0;
+  box-shadow: none;
+}
+
+html[data-app-theme='light'] .btn-back,
+html[data-app-theme='light'] .btn-settings,
+html[data-app-theme='light'] .btn-send,
+html[data-app-theme='light'] .btn-invite,
+html[data-app-theme='light'] .room-info-badge,
+html[data-app-theme='light'] .ai-badge {
+  border-color: rgba(166, 180, 255, 0.32);
+}
+
+html[data-app-theme='light'] .btn-back,
+html[data-app-theme='light'] .btn-settings {
+  background: rgba(255, 255, 255, 0.82);
+  color: #6f8cff;
+}
+
+html[data-app-theme='light'] .top-bar-icon-shell {
+  background: linear-gradient(135deg, rgba(111, 140, 255, 0.14), rgba(156, 108, 255, 0.12));
+  border-color: rgba(166, 180, 255, 0.32);
+}
+
+html[data-app-theme='light'] .btn-back:hover,
+html[data-app-theme='light'] .btn-settings:hover {
+  background: rgba(248, 250, 255, 0.96);
+}
+
+html[data-app-theme='light'] .room-info-badge {
+  background: linear-gradient(135deg, rgba(111, 140, 255, 0.14), rgba(156, 108, 255, 0.14));
+  color: #4a63c9;
+}
+
+html[data-app-theme='light'] .ai-badge {
+  background: linear-gradient(135deg, rgba(68, 176, 219, 0.2), rgba(96, 132, 255, 0.18));
+  border-color: rgba(83, 125, 223, 0.42);
+  color: #246a95;
+  font-weight: 700;
+}
+
+html[data-app-theme='light'] .chat-history-header,
+html[data-app-theme='light'] .chat-empty-state,
+html[data-app-theme='light'] .friend-status,
+html[data-app-theme='light'] .difficulty-menu-header,
+html[data-app-theme='light'] .friend-list-summary,
+html[data-app-theme='light'] .room-id-label {
+  color: #667389 !important;
+}
+
+html[data-app-theme='light'] .chat-message-text,
+html[data-app-theme='light'] .friend-name,
+html[data-app-theme='light'] .difficulty-option,
+html[data-app-theme='light'] .player-name,
+html[data-app-theme='light'] .friend-list-title {
+  color: #1f2937 !important;
+}
+
+html[data-app-theme='light'] .player-marker-chip,
+html[data-app-theme='light'] .player-marker-picker-btn,
+html[data-app-theme='light'] .player-marker-menu,
+html[data-app-theme='light'] .player-marker-option {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(145, 164, 236, 0.36);
+}
+
+html[data-app-theme='light'] .player-marker-picker-btn {
+  color: #4a63c9;
+}
+
+html[data-app-theme='light'] .player-marker-option {
+  color: #31405c;
+}
+
+html[data-app-theme='light'] .player-marker-option:hover,
+html[data-app-theme='light'] .player-marker-option.active {
+  background: rgba(111, 140, 255, 0.14);
+  border-color: rgba(111, 140, 255, 0.5);
+}
+
+html[data-app-theme='light'] .vs-box {
+  background: rgba(255, 255, 255, 0.94);
+}
+
+html[data-app-theme='light'] .vs-text {
+  background: linear-gradient(135deg, #5f73dc, #8d5de0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+html[data-app-theme='light'] .chat-message-item {
+  background: rgba(242, 246, 255, 0.95);
+  border-color: rgba(166, 180, 255, 0.24);
+}

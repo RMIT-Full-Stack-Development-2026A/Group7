@@ -1,0 +1,82 @@
+
+html[data-app-theme='light'] .chat-message-own {
+  background: linear-gradient(135deg, #356dff, #7c3aed);
+  border-color: rgba(53, 109, 255, 0.28);
+  box-shadow: 0 12px 24px rgba(53, 109, 255, 0.18);
+}
+
+html[data-app-theme='light'] .chat-message-other {
+  background: #eef3ff;
+  border-color: rgba(145, 164, 236, 0.3);
+}
+
+html[data-app-theme='light'] .chat-message-own .chat-message-author,
+html[data-app-theme='light'] .chat-message-own .chat-message-text {
+  color: #ffffff !important;
+}
+
+html[data-app-theme='light'] .chat-message-other .chat-message-author {
+  color: #4a63c9 !important;
+}
+
+html[data-app-theme='light'] .chat-message-other .chat-message-text {
+  color: #1f2937 !important;
+}
+
+html[data-app-theme='light'] .chat-history {
+  border-bottom-color: rgba(145, 164, 236, 0.22);
+}
+
+html[data-app-theme='light'] .chat-input {
+  background: rgba(246, 248, 255, 0.96);
+  border-color: rgba(166, 180, 255, 0.28);
+  color: #1f2937;
+}
+
+html[data-app-theme='light'] .chat-input::placeholder {
+  color: #8d98b5;
+}
+
+html[data-app-theme='light'] .btn-send {
+  background: linear-gradient(135deg, #6f8cff, #9a63ff);
+  box-shadow: 0 12px 26px rgba(128, 148, 225, 0.18);
+}
+
+html[data-app-theme='light'] .btn-send:hover {
+  background: linear-gradient(135deg, #5d7cff, #8d52ff);
+}
+
+html[data-app-theme='light'] .btn-start-game.host {
+  background: linear-gradient(90deg, #6f8cff 0%, #8f5dff 100%);
+  box-shadow: 0 18px 34px rgba(111, 140, 255, 0.18);
+}
+
+html[data-app-theme='light'] .btn-start-game.not-host {
+  background: rgba(209, 217, 246, 0.88);
+  color: #7d89a3;
+}
+
+html[data-app-theme='light'] .player-avatar {
+  border-color: #edf3ff;
+}
+
+html[data-app-theme='light'] .friend-avatar {
+  border-color: rgba(145, 164, 236, 0.3);
+}
+
+html[data-app-theme='light'] .online-indicator {
+  border-color: #eef3ff;
+}
+
+html[data-app-theme='light'] .ai-slot-icon {
+  color: #667389;
+}
+
+html[data-app-theme='light'] .ai-slot-btn:hover .ai-slot-icon {
+  color: #4a63c9;
+}
+
+html[data-app-theme='light'] .host-crown,
+html[data-app-theme='light'] .player-remove-btn {
+  border-color: #edf3ff;
+}

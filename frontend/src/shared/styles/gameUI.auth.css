@@ -1,0 +1,104 @@
+
+.btn-register-switch:hover {
+  background: rgba(102, 126, 234, 0.18);
+  border-color: rgba(102, 126, 234, 0.7);
+  transform: translateY(-1px);
+}
+
+/* Auth pages stay on the dark visual treatment even when the app theme is light. */
+.login-page .glass-panel,
+.reg-page .glass-panel {
+  background: rgba(17, 25, 40, 0.84);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: 0 24px 60px rgba(3, 7, 18, 0.34);
+}
+
+.login-page .form-group label,
+.reg-page .form-group label,
+.login-page .reg-desc,
+.reg-page .reg-desc,
+.login-page .reg-footer,
+.reg-page .reg-footer {
+  color: #cbd5e1;
+}
+
+.login-page .form-input,
+.reg-page .form-input,
+.login-page .form-select,
+.reg-page .form-select {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(148, 163, 184, 0.16);
+  color: #f8fafc;
+  caret-color: #f8fafc;
+  -webkit-text-fill-color: #f8fafc;
+}
+
+.login-page .form-input::placeholder,
+.reg-page .form-input::placeholder,
+.login-page .form-select.select-placeholder,
+.reg-page .form-select.select-placeholder {
+  color: #7f8ca6;
+  -webkit-text-fill-color: #7f8ca6;
+}
+
+.login-page .form-input:focus,
+.reg-page .form-input:focus,
+.login-page .form-select:focus,
+.reg-page .form-select:focus {
+  background: rgba(15, 23, 42, 0.92);
+  border-color: rgba(129, 140, 248, 0.9);
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.18);
+}
+
+.login-page .form-select,
+.reg-page .form-select {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23dbeafe' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.8' d='m3 6 5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat, no-repeat;
+  background-position: 0 0, right 1rem center;
+  background-size: auto, 14px;
+}
+
+.login-page .form-select:focus,
+.reg-page .form-select:focus {
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.9)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.8' d='m3 6 5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat, no-repeat;
+  background-position: 0 0, right 1rem center;
+  background-size: auto, 14px;
+}
+
+.login-page .form-select option,
+.reg-page .form-select option {
+  background: #111827;
+  color: #f8fafc;
+}
+
+.login-page .pw-toggle-btn,
+.reg-page .pw-toggle-btn {
+  color: #94a3b8;
+}
+
+.login-page .pw-toggle-btn:hover,
+.reg-page .pw-toggle-btn:hover {
+  color: #e2e8f0;
+}
+
+.login-page input:-webkit-autofill,
+.login-page input:-webkit-autofill:hover,
+.login-page input:-webkit-autofill:focus,
+.reg-page input:-webkit-autofill,
+.reg-page input:-webkit-autofill:hover,
+.reg-page input:-webkit-autofill:focus,
+.reg-page select:-webkit-autofill,
+.reg-page select:-webkit-autofill:hover,
+.reg-page select:-webkit-autofill:focus {
+  -webkit-text-fill-color: #f8fafc;
+  caret-color: #f8fafc;
+  box-shadow: 0 0 0 1000px rgba(15, 23, 42, 0.92) inset;
+  transition: background-color 9999s ease-in-out 0s;
+}

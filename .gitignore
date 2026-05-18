@@ -1,0 +1,7 @@
+node_modules/
+dist/
+build/
+backend/mongosh.exe
+.tmp/
+.DS_Store
+Thumbs.db
