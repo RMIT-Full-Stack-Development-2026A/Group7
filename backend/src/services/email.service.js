@@ -2,6 +2,8 @@ const nodemailer = require('nodemailer')
 
 const DEFAULT_SMTP_HOST = 'smtp.gmail.com'
 const DEFAULT_SMTP_PORT = 465
+const DEFAULT_SMTP_FAMILY = 4
+const DEFAULT_SMTP_TIMEOUT_MS = 8000
 const DEFAULT_MAIL_FROM_NAME = 'Team7-TicTacToangProject'
 
 const getEnvValue = (key, fallback = '') => {
@@ -20,6 +22,10 @@ const getTransporter = () => {
     host: getEnvValue('SMTP_HOST', DEFAULT_SMTP_HOST),
     port: Number(getEnvValue('SMTP_PORT', DEFAULT_SMTP_PORT)),
     secure: getEnvValue('SMTP_SECURE', 'true').toLowerCase() !== 'false',
+    family: Number(getEnvValue('SMTP_FAMILY', DEFAULT_SMTP_FAMILY)),
+    connectionTimeout: Number(getEnvValue('SMTP_TIMEOUT_MS', DEFAULT_SMTP_TIMEOUT_MS)),
+    greetingTimeout: Number(getEnvValue('SMTP_TIMEOUT_MS', DEFAULT_SMTP_TIMEOUT_MS)),
+    socketTimeout: Number(getEnvValue('SMTP_TIMEOUT_MS', DEFAULT_SMTP_TIMEOUT_MS)),
     auth: {
       user: getEnvValue('SMTP_USER'),
       pass: getEnvValue('SMTP_PASS'),
