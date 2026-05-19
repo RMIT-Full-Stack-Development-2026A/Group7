@@ -34,6 +34,16 @@ services:
         sync: false
       - key: MAIL_FROM
         sync: false
+      - key: PAYPAL_ENV
+        sync: false
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: PAYPAL_RETURN_URL
+        sync: false
+      - key: PAYPAL_CANCEL_URL
+        sync: false
 
   - type: web
     name: tictactoang-frontend
