@@ -5,13 +5,17 @@ const DEFAULT_SMTP_PORT = 465
 const DEFAULT_SMTP_FAMILY = 4
 const DEFAULT_SMTP_TIMEOUT_MS = 8000
 const DEFAULT_MAIL_FROM_NAME = 'Team7-TicTacToangProject'
+const DEFAULT_RESEND_FROM = 'TicTacToang <onboarding@resend.dev>'
+const RESEND_ENDPOINT = 'https://api.resend.com/emails'
 
 const getEnvValue = (key, fallback = '') => {
   const value = process.env[key]
   return value === undefined || value === null ? fallback : String(value).trim()
 }
 
-const isEmailConfigured = () => Boolean(getEnvValue('SMTP_USER') && getEnvValue('SMTP_PASS'))
+const isResendConfigured = () => Boolean(getEnvValue('RESEND_API_KEY'))
+const isSmtpConfigured = () => Boolean(getEnvValue('SMTP_USER') && getEnvValue('SMTP_PASS'))
+const isEmailConfigured = () => isResendConfigured() || isSmtpConfigured()
 
 const getTransporter = () => {
   if (!isEmailConfigured()) {
@@ -121,16 +125,36 @@ const verifySmtpConnection = async () => {
   }
 }
 
-const sendMail = async ({ to, subject, text, html }) => {
-  if (!to) {
-    return {
-      ok: false,
-      skipped: true,
-      reason: 'missing-recipient',
-      message: 'No receipt recipient email was provided.',
-    }
+const sendViaResend = async ({ to, subject, text, html }) => {
+  const apiKey = getEnvValue('RESEND_API_KEY')
+  const from = getEnvValue('RESEND_FROM') || getEnvValue('MAIL_FROM') || DEFAULT_RESEND_FROM
+
+  const response = await fetch(RESEND_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ from, to, subject, text, html }),
+  })
+
+  const payload = await response.json().catch(() => ({}))
+
+  if (!response.ok) {
+    const detail = payload?.message || payload?.error || `HTTP ${response.status}`
+    throw new Error(`Resend API error: ${detail}`)
   }
 
+  return {
+    ok: true,
+    provider: 'resend',
+    messageId: payload?.id,
+    accepted: [to],
+    rejected: [],
+  }
+}
+
+const sendViaSmtp = async ({ to, subject, text, html }) => {
   const transporter = getTransporter()
   if (!transporter) {
     return {
@@ -151,9 +175,36 @@ const sendMail = async ({ to, subject, text, html }) => {
 
   return {
     ok: true,
+    provider: 'smtp',
     messageId: info.messageId,
     accepted: info.accepted,
     rejected: info.rejected,
+  }
+}
+
+const sendMail = async ({ to, subject, text, html }) => {
+  if (!to) {
+    return {
+      ok: false,
+      skipped: true,
+      reason: 'missing-recipient',
+      message: 'No receipt recipient email was provided.',
+    }
+  }
+
+  if (isResendConfigured()) {
+    return sendViaResend({ to, subject, text, html })
+  }
+
+  if (isSmtpConfigured()) {
+    return sendViaSmtp({ to, subject, text, html })
+  }
+
+  return {
+    ok: false,
+    skipped: true,
+    reason: 'email-not-configured',
+    message: 'No email provider (Resend or SMTP) is configured.',
   }
 }
 
