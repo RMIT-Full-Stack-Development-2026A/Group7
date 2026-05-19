@@ -127,41 +127,56 @@ export function useSubscription() {
     });
 
     const captureOrder = async () => {
-      const checkoutUser = await resolveCheckoutUser();
-      const result = await profileApi.capturePayPalSubscriptionOrder({
-        orderId,
-        userId: checkoutUser.userId || checkoutUser.id,
-        username: checkoutUser.username,
-        email: checkoutUser.email,
-      });
-      handleCaptureResult(result);
-      window.history.replaceState({}, '', window.location.pathname);
+      try {
+        const checkoutUser = await resolveCheckoutUser();
+        const result = await profileApi.capturePayPalSubscriptionOrder({
+          orderId,
+          userId: checkoutUser.userId || checkoutUser.id,
+          username: checkoutUser.username,
+          email: checkoutUser.email,
+        });
+        handleCaptureResult(result);
+      } catch (error) {
+        setStatus({
+          type: 'error',
+          message: error.message || 'PayPal payment could not be captured. Please try again.',
+        });
+      } finally {
+        window.history.replaceState({}, '', window.location.pathname);
+      }
     };
 
     captureOrder();
   }, [handleCaptureResult, profileApi]);
 
   const handlePayWithPayPal = async () => {
-    setStatus({ type: 'processing', message: 'Creating PayPal checkout...' });
-    const checkoutUser = await resolveCheckoutUser();
-    const result = await profileApi.createPayPalSubscriptionOrder({
-      userId: checkoutUser.userId || checkoutUser.id,
-      username: checkoutUser.username,
-      email: checkoutUser.email,
-      returnUrl: buildCurrentUrl('success'),
-      cancelUrl: buildCurrentUrl('cancel'),
-    });
+    try {
+      setStatus({ type: 'processing', message: 'Creating PayPal checkout...' });
+      const checkoutUser = await resolveCheckoutUser();
+      const result = await profileApi.createPayPalSubscriptionOrder({
+        userId: checkoutUser.userId || checkoutUser.id,
+        username: checkoutUser.username,
+        email: checkoutUser.email,
+        returnUrl: buildCurrentUrl('success'),
+        cancelUrl: buildCurrentUrl('cancel'),
+      });
 
-    if (!result?.success || !result.approveUrl) {
+      if (!result?.success || !result.approveUrl) {
+        setStatus({
+          type: 'error',
+          message: api.error || 'Could not start PayPal checkout. Check backend PayPal configuration.',
+        });
+        return;
+      }
+
+      setStatus({ type: 'processing', message: 'Redirecting to PayPal wallet...' });
+      window.location.assign(result.approveUrl);
+    } catch (error) {
       setStatus({
         type: 'error',
-        message: api.error || 'Could not start PayPal checkout. Check backend PayPal configuration.',
+        message: error.message || 'Could not start PayPal checkout. Check backend PayPal configuration.',
       });
-      return;
     }
-
-    setStatus({ type: 'processing', message: 'Redirecting to PayPal wallet...' });
-    window.location.assign(result.approveUrl);
   };
 
   return {

@@ -53,9 +53,6 @@ const LEGACY_SEED_USERS = [
   },
 ]
 
-const seedEmails = SEED_USERS.map((user) => user.email)
-const seedUsernames = SEED_USERS.map((user) => user.username)
-const legacySeedIds = LEGACY_SEED_USERS.map((user) => user._id)
 const legacySeedEmails = LEGACY_SEED_USERS.map((user) => user.email)
 
 const buildSeedUser = async (seedUser) => {
@@ -72,25 +69,38 @@ const buildSeedUser = async (seedUser) => {
 }
 
 async function seedAuthUsers() {
-  const seedUserIds = SEED_USERS.map((user) => user._id)
+  await User.deleteMany({ email: { $in: legacySeedEmails } })
 
-  await User.deleteMany({
-    $or: [
-      { _id: { $in: legacySeedIds } },
-      { email: { $in: legacySeedEmails } },
-      { email: { $in: seedEmails } },
-      { username: { $in: seedUsernames } },
-    ],
-  })
+  const users = await Promise.all(SEED_USERS.map(async (seedUser) => {
+    const nextUser = await buildSeedUser(seedUser)
+    const existingUser = await User.findOne({
+      $or: [
+        { _id: seedUser._id },
+        { email: seedUser.email },
+        { username: seedUser.username },
+      ],
+    })
 
-  const users = await Promise.all(SEED_USERS.map(buildSeedUser))
-  await User.insertMany(users)
-  await Gameroom.deleteMany({
-    $or: [
-      { host: { $in: [...legacySeedIds, ...seedUserIds] } },
-      { 'players.userId': { $in: [...legacySeedIds, ...seedUserIds] } },
-    ],
-  })
+    if (!existingUser) {
+      return User.create(nextUser)
+    }
+
+    Object.assign(existingUser, {
+      name: nextUser.name,
+      username: nextUser.username,
+      email: nextUser.email,
+      password: nextUser.password,
+      country: nextUser.country,
+      role: nextUser.role,
+      accountStatus: nextUser.accountStatus,
+      isPremium: nextUser.isPremium,
+      subscriptionEndDate: nextUser.subscriptionEndDate || null,
+      failedLoginAttempts: 0,
+      lockUntil: null,
+    })
+
+    return existingUser.save()
+  }))
 
   const validUserIds = new Set((await User.find({}, { _id: 1 }).lean()).map((user) => String(user._id)))
   const rooms = await Gameroom.find({}, { _id: 1, host: 1 }).lean()
@@ -102,7 +112,7 @@ async function seedAuthUsers() {
     await Gameroom.deleteMany({ _id: { $in: orphanRoomIds } })
   }
 
-  console.log('Seeded auth users: admin@tictactoang.com, playera@tictactoang.com, playerb@tictactoang.com')
+  console.log(`Seeded auth users: ${users.map((user) => user.email).join(', ')}`)
 }
 
 async function runStandaloneSeed() {

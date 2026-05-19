@@ -37,7 +37,14 @@ export const getBackendOrigin = () =>
   preferBrowserOriginForPublicClient(import.meta.env.VITE_BACKEND_ORIGIN || import.meta.env.VITE_SOCKET_BASE_URL)
 
 export const getApiBaseUrl = () =>
-  preferBrowserOriginForPublicClient(import.meta.env.VITE_API_BASE_URL, '/api')
+  preferBrowserOriginForPublicClient(
+    import.meta.env.VITE_API_BASE_URL || (
+      import.meta.env.VITE_BACKEND_ORIGIN
+        ? `${trimTrailingSlash(import.meta.env.VITE_BACKEND_ORIGIN)}/api`
+        : ''
+    ),
+    '/api'
+  )
 
 export const getSocketBaseUrl = () =>
-  preferBrowserOriginForPublicClient(import.meta.env.VITE_SOCKET_BASE_URL)
+  preferBrowserOriginForPublicClient(import.meta.env.VITE_SOCKET_BASE_URL || import.meta.env.VITE_BACKEND_ORIGIN)

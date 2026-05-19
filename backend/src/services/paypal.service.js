@@ -97,10 +97,25 @@ const normalizeUrl = (value, fallback) => {
   }
 }
 
+const getDefaultFrontendOrigin = () => {
+  const firstConfiguredOrigin = getEnvValue('CORS_ORIGIN')
+    .split(',')
+    .map((origin) => origin.trim())
+    .find(Boolean)
+
+  return firstConfiguredOrigin || 'http://localhost:3000'
+}
+
+const getDefaultSubscriptionUrl = (paypalState) => {
+  const url = new URL('/subscription', getDefaultFrontendOrigin())
+  url.searchParams.set('paypal', paypalState)
+  return url.toString()
+}
+
 const createPremiumOrder = async ({ userId, returnUrl, cancelUrl }) => {
   const safeUserId = String(userId || 'unknown-user').slice(0, 64)
-  const fallbackReturnUrl = getEnvValue('PAYPAL_RETURN_URL', 'http://localhost:3000/subscription?paypal=success')
-  const fallbackCancelUrl = getEnvValue('PAYPAL_CANCEL_URL', 'http://localhost:3000/subscription?paypal=cancel')
+  const fallbackReturnUrl = getEnvValue('PAYPAL_RETURN_URL', getDefaultSubscriptionUrl('success'))
+  const fallbackCancelUrl = getEnvValue('PAYPAL_CANCEL_URL', getDefaultSubscriptionUrl('cancel'))
   const invoiceId = `premium-${Date.now()}-${safeUserId}`.replace(/[^a-zA-Z0-9_-]/g, '-').slice(0, 127)
 
   const order = await requestPayPal('/v2/checkout/orders', {

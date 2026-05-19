@@ -10,8 +10,8 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 4000
+      - key: NODE_VERSION
+        value: 22.12.0
       - key: MONGODB_URI
         sync: false
       - key: MONGODB_DB_NAME
@@ -35,14 +35,10 @@ services:
       - key: MAIL_FROM
         sync: false
       - key: PAYPAL_ENV
-        sync: false
+        value: sandbox
       - key: PAYPAL_CLIENT_ID
         sync: false
       - key: PAYPAL_CLIENT_SECRET
-        sync: false
-      - key: PAYPAL_RETURN_URL
-        sync: false
-      - key: PAYPAL_CANCEL_URL
         sync: false
 
   - type: web
@@ -56,9 +52,10 @@ services:
         source: /*
         destination: /index.html
     envVars:
-      - key: VITE_API_BASE_URL
-        sync: false
-      - key: VITE_SOCKET_BASE_URL
-        sync: false
+      - key: NODE_VERSION
+        value: 22.12.0
       - key: VITE_BACKEND_ORIGIN
-        sync: false
+        fromService:
+          type: web
+          name: tictactoang-backend
+          envVarKey: RENDER_EXTERNAL_URL

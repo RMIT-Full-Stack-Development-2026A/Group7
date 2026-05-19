@@ -48,8 +48,8 @@ MAIL_FROM="Team7-TicTacToangProject <your-gmail-address@gmail.com>"
 PAYPAL_ENV=sandbox
 PAYPAL_CLIENT_ID=your-paypal-rest-app-client-id
 PAYPAL_CLIENT_SECRET=your-paypal-rest-app-secret
-PAYPAL_RETURN_URL=http://localhost:3000/subscription?paypal=success
-PAYPAL_CANCEL_URL=http://localhost:3000/subscription?paypal=cancel
+PAYPAL_RETURN_URL=https://your-frontend-domain.example/subscription?paypal=success
+PAYPAL_CANCEL_URL=https://your-frontend-domain.example/subscription?paypal=cancel
 ```
 
 Use `PAYPAL_ENV=live` only when you are ready to charge real money with live PayPal REST app credentials.
@@ -67,7 +67,12 @@ Set these in the frontend host:
 ```env
 VITE_API_BASE_URL=https://your-backend-domain.example/api
 VITE_SOCKET_BASE_URL=https://your-backend-domain.example
+VITE_BACKEND_ORIGIN=https://your-backend-domain.example
 ```
+
+On Render, `render.yaml` sets `VITE_BACKEND_ORIGIN` automatically from the backend service URL.
+If `VITE_API_BASE_URL` and `VITE_SOCKET_BASE_URL` are not set, the frontend derives them from
+`VITE_BACKEND_ORIGIN`.
 
 ## Local Cloud Test
 
