@@ -40,6 +40,8 @@ services:
         sync: false
       - key: RESEND_FROM
         value: TicTacToang <onboarding@resend.dev>
+      - key: RESEND_TO_OVERRIDE
+        sync: false
       - key: PAYPAL_ENV
         value: sandbox
       - key: PAYPAL_CLIENT_ID

@@ -128,6 +128,10 @@ const verifySmtpConnection = async () => {
 const sendViaResend = async ({ to, subject, text, html }) => {
   const apiKey = getEnvValue('RESEND_API_KEY')
   const from = getEnvValue('RESEND_FROM') || getEnvValue('MAIL_FROM') || DEFAULT_RESEND_FROM
+  // Sandbox mode: Resend without a verified domain only delivers to the
+  // account owner's email, so redirect every recipient there when this is set.
+  const override = getEnvValue('RESEND_TO_OVERRIDE')
+  const finalTo = override || to
 
   const response = await fetch(RESEND_ENDPOINT, {
     method: 'POST',
@@ -135,7 +139,7 @@ const sendViaResend = async ({ to, subject, text, html }) => {
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ from, to, subject, text, html }),
+    body: JSON.stringify({ from, to: finalTo, subject, text, html }),
   })
 
   const payload = await response.json().catch(() => ({}))
@@ -149,8 +153,9 @@ const sendViaResend = async ({ to, subject, text, html }) => {
     ok: true,
     provider: 'resend',
     messageId: payload?.id,
-    accepted: [to],
+    accepted: [finalTo],
     rejected: [],
+    redirectedFrom: override ? to : undefined,
   }
 }
 
