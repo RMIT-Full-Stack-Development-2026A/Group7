@@ -86,16 +86,4 @@ npm --workspace frontend run dev
 
 Open the frontend from two browsers or two computers on the same public frontend URL. Create a room on one computer, join by code on the other, and start the match. Both clients should enter the same room and receive the same turn order.
 
-## Temporary Public Link
-
-For testing from another Wi-Fi without deploying yet, run the backend, frontend, and a Cloudflare quick tunnel:
-
-```bash
-npm --workspace backend run start
-npm --workspace frontend run dev -- --host 0.0.0.0 --port 3000
-cloudflared tunnel --url http://localhost:3000
-```
-
-Share the `https://...trycloudflare.com` URL printed by cloudflared. The link stays online only while your computer, backend, frontend, and tunnel command are running.
-
 The current frontend dev server proxies `/api` and `/socket.io` to `http://localhost:4000`, so users only need the one public frontend URL.
