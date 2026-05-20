@@ -38,7 +38,7 @@ Use `PAYPAL_ENV=live` only with live credentials.
 ## 3. Frontend env vars
 
 ```env
-VITE_BACKEND_ORIGIN=https://your-backend.onrender.com
+VITE_BACKEND_ORIGIN=https://tictactoang-backend.onrender.com
 ```
 
 `render.yaml` sets this automatically. `VITE_API_BASE_URL` and `VITE_SOCKET_BASE_URL` are derived from it.
