@@ -3,7 +3,7 @@
 const gameRepository = require('./game.repository')
 const { generateGameId } = require('./game.move.helpers')
 
-const VALID_MOVE_PLAYERS = new Set(['X', 'O', 'P1', 'P2', 'P3', 'P4'])
+const VALID_MOVE_PLAYERS = new Set(['X', 'O', 'P1', 'P2', 'P3'])
 
 const escapeRegex = (value = '') => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
@@ -70,7 +70,7 @@ const buildGameTypeClauses = (gameType, userIdString) => {
 
 const buildPlayerCountClause = (playerCount) => {
   const n = Number(playerCount)
-  if (!Number.isInteger(n) || ![2, 3, 4].includes(n)) return null
+  if (!Number.isInteger(n) || ![2, 3].includes(n)) return null
   if (n === 2) {
     return {
       $or: [
@@ -87,7 +87,7 @@ const buildResultWinClause = (userId) => ({
   $or: [
     { 'players.X.playerId': userId, 'result.winner': 'X' },
     { 'players.O.playerId': userId, 'result.winner': 'O' },
-    ...['P1', 'P2', 'P3', 'P4'].map((sym) => ({
+    ...['P1', 'P2', 'P3'].map((sym) => ({
       participants: { $elemMatch: { playerId: userId, playerSymbol: sym } },
       'result.winner': sym,
     })),
@@ -167,6 +167,9 @@ const createCompletedLocalGame = async (gameData) => {
   if (![10, 15].includes(boardSize)) throw new Error('Board size must be 10 or 15')
   if (!Array.isArray(participants) || participants.length < 2) {
     throw new Error('At least two participants are required')
+  }
+  if (participants.length > 3) {
+    throw new Error('At most three participants are supported')
   }
 
   const sanitizedMoves = sanitizeMoves(rawMoves, boardSize)

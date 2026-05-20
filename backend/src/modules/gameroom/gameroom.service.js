@@ -5,6 +5,7 @@ const {
   DEFAULT_MARKER_BY_SIZE,
   MAX_CHAT_MESSAGE_LENGTH,
   generateUniqueRoomId,
+  normalizeSupportedRoomSize,
   normalizeMarker,
   generateUniqueMarkerColor,
   getFallbackMarkerParts,
@@ -21,6 +22,12 @@ const {
 
 const ensureHostPlayerPresent = async (room) => {
   if (!room?.host) return room
+
+  const supportedSize = normalizeSupportedRoomSize(room.size)
+  const sizeChanged = room.size !== supportedSize
+  if (room.size !== supportedSize) {
+    room.size = supportedSize
+  }
 
   const hostUserId = String(room.host)
   const hostUser = await User.findById(hostUserId).lean().catch(() => null)
@@ -39,7 +46,7 @@ const ensureHostPlayerPresent = async (room) => {
     getFallbackMarkerParts(room.gameSettings?.marker)
   )
 
-  if (arePlayerListsEqual(room.players || [], nextPlayers)) {
+  if (arePlayerListsEqual(room.players || [], nextPlayers) && !sizeChanged) {
     setPlayersChanged(room, false)
     return room
   }
@@ -54,6 +61,7 @@ const createGameroom = async (userId, roomData) => {
   const { roomName, size, boardStyle, boardSize, marker, timeToThink, hostPosition, username, email, hostName, hostAvatar } = roomData
   const roomId = await generateUniqueRoomId()
   const authUser = await findUserByIdentity({ userId, username, email })
+  const supportedSize = normalizeSupportedRoomSize(size)
 
   if (!authUser) throw new ErrorResponse('Authenticated user not found', 404)
 
@@ -61,15 +69,15 @@ const createGameroom = async (userId, roomData) => {
   const parsedHostPosition = Number(hostPosition)
   const resolvedHostPosition = Number.isInteger(parsedHostPosition)
     && parsedHostPosition >= 1
-    && parsedHostPosition <= Number(size)
+    && parsedHostPosition <= supportedSize
     ? parsedHostPosition
     : null
-  const resolvedMarker = normalizeMarker(marker) || DEFAULT_MARKER_BY_SIZE[size] || 'X'
+  const resolvedMarker = normalizeMarker(marker) || DEFAULT_MARKER_BY_SIZE[supportedSize] || 'X'
 
   return gameroomRepository.createGameroom({
     roomId,
     roomName,
-    size,
+    size: supportedSize,
     host: resolvedUserId,
     gameSettings: {
       boardStyle: boardStyle || 'Classic',
@@ -114,9 +122,10 @@ const updateGameroomSettings = async (roomId, settings) => {
 
 const updateGameroomPlayers = async (roomId, players) => {
   const room = await getGameroomById(roomId)
+  const supportedSize = normalizeSupportedRoomSize(room.size)
 
   if (!Array.isArray(players)) throw new ErrorResponse('Invalid players payload', 400)
-  if (players.length > room.size) throw new ErrorResponse('Too many players for this room', 400)
+  if (players.length > supportedSize) throw new ErrorResponse('Too many players for this room', 400)
 
   const hostUserId = room.host ? String(room.host) : null
   let nextPlayers = Array.isArray(players) ? [...players] : []
@@ -142,7 +151,7 @@ const updateGameroomPlayers = async (roomId, players) => {
   })
 
   nextPlayers = withPlayerMarkerIdentity(
-    [...nextPlayers, ...preservedHumanGuests].slice(0, room.size),
+    [...nextPlayers, ...preservedHumanGuests].slice(0, supportedSize),
     room.players || []
   )
 
@@ -159,13 +168,14 @@ const updateGameroomPlayers = async (roomId, players) => {
 const addPlayerToGameroom = async (roomId, playerData) => {
   const room = await getGameroomById(roomId)
   const incomingUserId = playerData?.userId ? String(playerData.userId) : null
+  const supportedSize = normalizeSupportedRoomSize(room.size)
 
   if (incomingUserId && room.players.find((player) => String(player.userId) === incomingUserId)) {
     setPlayersChanged(room, false)
     return room
   }
 
-  if (room.players.length >= room.size) throw new ErrorResponse('Room is full', 400)
+  if (room.players.length >= supportedSize) throw new ErrorResponse('Room is full', 400)
 
   room.players = withPlayerMarkerIdentity([...(room.players || []), playerData], room.players || [])
   await room.save()

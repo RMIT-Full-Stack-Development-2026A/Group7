@@ -9,6 +9,7 @@ export default defineConfig({
   server: {
     port: 3000,
     host: '0.0.0.0',
+    allowedHosts: ['.loca.lt', '.trycloudflare.com', '.ngrok-free.app'],
     hot: true,
     proxy: {
       '/api': {

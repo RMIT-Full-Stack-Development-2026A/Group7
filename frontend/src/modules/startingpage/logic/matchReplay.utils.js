@@ -13,7 +13,6 @@ export const SYMBOL_COLORS = {
   P1: '#60a5fa',
   P2: '#f472b6',
   P3: '#facc15',
-  P4: '#34d399',
 };
 
 const FALLBACK_COLOR = '#cbd5f5';

@@ -173,6 +173,32 @@ const makeAIMove = async (gameId) => {
   return makeMove(gameId, aiPlayer.playerId, move.row, move.col, 0, checkWin)
 }
 
+const skipTurn = async (gameId, playerId, expectedTurn = null, timeTaken = 0) => {
+  const game = await getGameById(gameId)
+
+  if (game.status !== 'active') throw new Error('Game is not active')
+
+  const currentPlayerSymbol = game.currentTurn
+  if (expectedTurn && expectedTurn !== currentPlayerSymbol) {
+    throw new Error('Turn already changed')
+  }
+
+  const currentPlayer = game.players[currentPlayerSymbol]
+  if (playerId && String(currentPlayer.playerId) !== String(playerId) && !currentPlayer.isAI) {
+    throw new Error('Not your turn')
+  }
+
+  const updatedGame = await gameRepository.skipTurn(gameId, currentPlayerSymbol, timeTaken)
+  if (!updatedGame) throw new Error('Turn could not be skipped because the turn changed')
+
+  return {
+    game: updatedGame,
+    skippedPlayer: currentPlayerSymbol,
+    currentTurn: updatedGame.currentTurn,
+    timeTaken: Math.max(0, Number(timeTaken) || 0),
+  }
+}
+
 const resignGame = async (gameId, playerId) => {
   const game = await getGameById(gameId)
 
@@ -249,6 +275,7 @@ module.exports = {
   joinGame,
   makeMove,
   makeAIMove,
+  skipTurn,
   resignGame,
   deleteGame,
   abortGame,

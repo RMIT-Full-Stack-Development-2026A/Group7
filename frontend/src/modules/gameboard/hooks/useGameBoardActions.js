@@ -95,6 +95,19 @@ export const useGameBoardActions = ({
 
   useEffect(() => { applyResignationResultRef.current = applyResignationResult }, [applyResignationResult])
 
+  const resolveNextPlayer = useCallback((player) => (
+    isExpandedLocalGame ? getNextLocalPlayerToken(player, isExpandedLocalGame, localTurnPlayers) : (player === 'X' ? 'O' : 'X')
+  ), [isExpandedLocalGame, localTurnPlayers])
+
+  const applyTurnSkip = useCallback(({ skippedPlayer, nextPlayer } = {}) => {
+    if (refs.gameOverRef.current) return
+    setters.setCurrentPlayer((player) => {
+      const playerToSkip = skippedPlayer || player
+      if (player !== playerToSkip) return player
+      return nextPlayer || resolveNextPlayer(player)
+    })
+  }, [refs.gameOverRef, resolveNextPlayer, setters])
+
   const emitRoomResignation = useCallback((winner, resignedBy) => {
     if (!isRoomMultiplayerGame || !roomData?.roomId) return
     gameroomSocketService.emit('game-action', {
@@ -118,6 +131,7 @@ export const useGameBoardActions = ({
     })
     const unsubscribeAction = gameroomSocketService.on('game-action', ({ action, payload } = {}) => {
       if (action === 'player-resigned') applyResignationResultRef.current?.(payload || {})
+      if (action === 'turn-skipped') applyTurnSkip(payload || {})
     })
 
     return () => {
@@ -125,14 +139,48 @@ export const useGameBoardActions = ({
       unsubscribeAction()
       gameroomSocketService.leaveRoom(roomData.roomId)
     }
-  }, [authIdentity?.id, authIdentity?.name, authIdentity?.userId, authIdentity?.username, isRoomMultiplayerGame, roomData?.roomId])
+  }, [applyTurnSkip, authIdentity?.id, authIdentity?.name, authIdentity?.userId, authIdentity?.username, isRoomMultiplayerGame, roomData?.roomId])
 
-  const skipCurrentTurn = useCallback(() => {
-    if (state.gameOver) return
-    setters.setCurrentPlayer((player) => (
-      isExpandedLocalGame ? getNextLocalPlayerToken(player, isExpandedLocalGame, localTurnPlayers) : (player === 'X' ? 'O' : 'X')
-    ))
-  }, [isExpandedLocalGame, localTurnPlayers, setters, state.gameOver])
+  const skipCurrentTurn = useCallback(async () => {
+    if (refs.gameOverRef.current) return
+
+    const skippedPlayer = refs.currentPlayerRef.current || state.currentPlayer
+    const nextPlayer = resolveNextPlayer(skippedPlayer)
+    const timeTaken = Math.max(0, normalizedTimeControl - state.secondsLeft)
+      || normalizedTimeControl
+
+    if (isRoomMultiplayerGame && roomData?.roomId) {
+      gameroomSocketService.emit('game-action', {
+        roomId: roomData.roomId,
+        action: 'turn-skipped',
+        payload: { skippedPlayer, nextPlayer },
+      })
+      return
+    }
+
+    if (state.useRemoteSession && state.gameId) {
+      setters.setMoveMakingState(true)
+      try {
+        const response = await gameAPI.skipTurn(
+          state.gameId,
+          { player: skippedPlayer, timeTaken },
+          REMOTE_MOVE_TIMEOUT_MS
+        )
+        if (!response.ok) throw new Error(response.data?.message || response.data?.error || 'Skip turn failed')
+        applyTurnSkip({
+          skippedPlayer: response.data?.data?.skippedPlayer || skippedPlayer,
+          nextPlayer: response.data?.data?.currentTurn || nextPlayer,
+        })
+      } catch (error) {
+        console.error('Failed to skip timed-out turn:', error)
+      } finally {
+        setters.setMoveMakingState(false)
+      }
+      return
+    }
+
+    applyTurnSkip({ skippedPlayer, nextPlayer })
+  }, [applyTurnSkip, isRoomMultiplayerGame, normalizedTimeControl, refs.currentPlayerRef, refs.gameOverRef, resolveNextPlayer, roomData?.roomId, setters, state.currentPlayer, state.gameId, state.secondsLeft, state.useRemoteSession])
 
   const resetCurrentMatchState = useCallback(() => resetMatchState({
     refs, setters, emptyBoard, isExpandedLocalGame, localTurnPlayers, normalizedTimeControl,

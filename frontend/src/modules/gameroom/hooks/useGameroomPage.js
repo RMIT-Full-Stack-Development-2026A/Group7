@@ -12,6 +12,7 @@ import {
   normalizeRoomPlayersForSync,
   arePlayerSlotsEqual,
   areRoomPayloadsEqual,
+  normalizeSupportedRoomSize,
 } from '../utils/gameroom.page.utils.js';
 import { attachGameroomSocketListeners } from '../utils/gameroomSocketListeners.js';
 import { useGameroomActions } from './useGameroomActions.js';
@@ -21,7 +22,7 @@ export function useGameroomPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const [authIdentity, setAuthIdentity] = useState(getStoredAuthIdentity);
-  const [roomSize, setRoomSize] = useState(4);
+  const [roomSize, setRoomSize] = useState(2);
   const [players, setPlayers] = useState(buildEmptyPlayers);
   const [roomData, setRoomData] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -70,7 +71,8 @@ export function useGameroomPage() {
       .map((player) => String(player?.userId || ''))
       .filter(Boolean)
   ), [roomData?.players]);
-  const hasOpenRoomSlot = (roomData?.players || []).filter(Boolean).length < Number(roomData?.size || roomSize || 0);
+  const hasOpenRoomSlot = (roomData?.players || []).filter(Boolean).length
+    < normalizeSupportedRoomSize(roomData?.size || roomSize);
 
   const {
     buildGameStartPayload, navigateToGameStart, resetRoom,

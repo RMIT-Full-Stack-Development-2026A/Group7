@@ -16,7 +16,7 @@ const gameroomSchema = new mongoose.Schema(
     },
     size: {
       type: Number,
-      enum: [2, 3, 4],
+      enum: [2, 3],
       required: true,
     },
     host: {

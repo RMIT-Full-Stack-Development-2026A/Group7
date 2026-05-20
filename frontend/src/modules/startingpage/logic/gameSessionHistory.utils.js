@@ -31,7 +31,6 @@ export const PLAYER_COUNT_OPTIONS = [
   { value: '', label: 'Any player count' },
   { value: '2', label: '2 Players' },
   { value: '3', label: '3 Players' },
-  { value: '4', label: '4 Players' },
 ];
 
 export const SORT_OPTIONS = [

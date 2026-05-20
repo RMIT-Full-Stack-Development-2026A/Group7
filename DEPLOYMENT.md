@@ -38,7 +38,7 @@ Use `PAYPAL_ENV=live` only with live credentials.
 ## 3. Frontend env vars
 
 ```env
-VITE_BACKEND_ORIGIN=https://your-backend.onrender.com
+VITE_BACKEND_ORIGIN=https://tictactoang-backend.onrender.com
 ```
 
 `render.yaml` sets this automatically. `VITE_API_BASE_URL` and `VITE_SOCKET_BASE_URL` are derived from it.
@@ -51,3 +51,23 @@ npm --workspace frontend run dev
 ```
 
 The frontend dev server proxies `/api` and `/socket.io` to `http://localhost:4000`.
+
+## 5. Temporary public link (Cloudflare Quick Tunnel)
+
+Share the local dev server with anyone on the internet — no account, no DNS, no Cloudflare config required.
+
+Install `cloudflared` once:
+
+- Windows: `winget install --id Cloudflare.cloudflared`
+- macOS: `brew install cloudflared`
+- Linux: see https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/
+
+Then in three terminals from the repo root:
+
+```bash
+npm --workspace backend run dev
+npm --workspace frontend run dev
+npm run tunnel
+```
+
+Cloudflared prints a `https://<random>.trycloudflare.com` URL. Share that link — it's online only while all three commands are running. The backend's CORS and Vite's `allowedHosts` already accept `.trycloudflare.com`, so no further config is needed.

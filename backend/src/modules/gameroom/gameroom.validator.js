@@ -19,17 +19,11 @@ const validMarkers = [
   'Heart-Spade-Diamond',
   'Club-Diamond-Star',
   'Triangle-Square-Circle',
-  'X-O-Triangle-Square',
-  'Circle-Star-Square-Triangle',
-  'Moon-Sun-Cloud-Lightning',
-  'Heart-Spade-Diamond-Club',
-  'Star-Circle-Heart-Diamond',
-  'Triangle-Square-Club-Spade',
 ]
 
 const validBoardStyles = ['Classic', 'Modern', 'Minimal']
 const validBoardSizes = ['10x10', '15x15']
-const validRoomSizes = [2, 3, 4]
+const validRoomSizes = [2, 3]
 const validDifficulties = ['Easy', 'Medium', 'Hard']
 const validRoomStatuses = ['pending', 'ready', 'started', 'completed']
 
@@ -53,7 +47,7 @@ const assertCreateGameroomRequest = (body = {}) => {
   }
 
   if (!size || !validateRoomSize(size)) {
-    throw new ErrorResponse('Invalid room size. Must be 2, 3, or 4', 400)
+    throw new ErrorResponse('Invalid room size. Must be 2 or 3', 400)
   }
 
   if (timeToThink && !validateTimeToThink(timeToThink)) {

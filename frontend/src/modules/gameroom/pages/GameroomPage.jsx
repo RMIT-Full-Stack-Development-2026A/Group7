@@ -4,7 +4,6 @@ import { TopBar } from '../../../shared/components/TopBar/TopBar.jsx';
 import { StartGameButton } from '../../../shared/components/Button/StartGameButton.jsx';
 import { ChatBar } from '../components/ChatBar/ChatBar.jsx';
 import { FriendList } from '../components/SidePanel/SidePanel.jsx';
-import { FourPeople } from '../components/RoomLayout/FourPeople.jsx';
 import { ThreePeople } from '../components/RoomLayout/ThreePeople.jsx';
 import { TwoPeople } from '../components/RoomLayout/TwoPeople.jsx';
 import { useGameroomPage } from '../hooks/useGameroomPage.js';
@@ -52,11 +51,6 @@ function GameroomPage() {
       canChangeMarker: canChangePlayerMarker,
       onChangeMarker: handleChangePlayerMarker,
     };
-
-    if (roomSize === 4) {
-      return <FourPeople {...layoutProps} />;
-    }
-
 
     if (roomSize === 3) {
       return <ThreePeople {...layoutProps} />

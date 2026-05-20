@@ -7,10 +7,17 @@ export const HOST_APPROVAL_SECONDS = 10;
 
 export const buildEmptyPlayers = () => [null, null, null, null];
 
+export const normalizeSupportedRoomSize = (size, fallback = 2) => {
+  const parsed = Number(size);
+  if (parsed === 2 || parsed === 3) return parsed;
+  if (parsed > 3) return 3;
+  return fallback;
+};
+
 export const getActiveSlotIndices = (size) => {
-  if (size === 2) return [0, 2];
-  if (size === 3) return [0, 2, 3];
-  return [0, 1, 2, 3];
+  const normalizedSize = normalizeSupportedRoomSize(size);
+  if (normalizedSize === 3) return [0, 2, 3];
+  return [0, 2];
 };
 
 const getHumanSlotName = (slotIndex, isHostPlayer = false) =>
@@ -59,7 +66,7 @@ const buildSlotEntry = (player, slotIndex, hostUserId, authIdentity) => {
 
 export const mapRoomPlayersToSlots = (room, authIdentity = null) => {
   const nextPlayers = buildEmptyPlayers();
-  const activeSlots = getActiveSlotIndices(Number(room?.size) || 4);
+  const activeSlots = getActiveSlotIndices(room?.size);
   const roomPlayers = Array.isArray(room?.players) ? room.players : [];
   const hostUserId = room?.host ? String(room.host) : null;
 
@@ -84,7 +91,7 @@ export const mapRoomPlayersToSlots = (room, authIdentity = null) => {
 };
 
 export const mapSlotsToRoomPlayers = (players, room) => {
-  const activeSlots = getActiveSlotIndices(Number(room?.size) || 4);
+  const activeSlots = getActiveSlotIndices(room?.size);
   const hostUserId = room?.host ? String(room.host) : null;
 
   return activeSlots

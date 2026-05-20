@@ -100,7 +100,7 @@ const CreateRoomPage = ({ onCreateRoom }) => {
         <div className="setup-section">
           <label>Number of Players</label>
           <div className="options-grid">
-            {[2, 3, 4].map((num) => (
+            {[2, 3].map((num) => (
               <button
                 key={num}
                 className={`option-btn ${players === num ? 'active' : ''}`}

@@ -152,6 +152,32 @@ const addMoveToGame = async (gameId, moveData, expectedTurn = moveData.player) =
   );
 };
 
+const skipTurn = async (gameId, expectedTurn, timeTaken = 0) => {
+  const nextTurn = expectedTurn === 'X' ? 'O' : 'X';
+  const safeTimeTaken = Math.max(0, Number(timeTaken) || 0);
+
+  return Game.findOneAndUpdate(
+    {
+      gameId,
+      status: 'active',
+      currentTurn: expectedTurn
+    },
+    {
+      $set: {
+        lastMoveAt: new Date(),
+        currentTurn: nextTurn
+      },
+      $inc: {
+        [`players.${expectedTurn}.totalTimeUsed`]: safeTimeTaken
+      }
+    },
+    {
+      new: true,
+      runValidators: true
+    }
+  );
+};
+
 /**
  * Complete a game
  * @param {string} gameId - Custom game identifier
@@ -239,5 +265,6 @@ module.exports = {
 
   // Game operations
   addMoveToGame,
+  skipTurn,
   completeGame,
 };

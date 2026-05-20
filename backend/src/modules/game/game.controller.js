@@ -153,6 +153,25 @@ const makeAIMove = asyncHandler(async (req, res) => {
   res.status(200).json(new SuccessResponseDTO(new MoveResponseDTO(result.move, result.game).toJSON()).toJSON())
 })
 
+const skipTurn = asyncHandler(async (req, res) => {
+  const { gameId } = req.params
+  const game = await gameService.getGameById(gameId)
+  const currentTurnPlayer = game.players[game.currentTurn]
+  const resolvedPlayerId = resolveUserId(req.user) || currentTurnPlayer?.playerId
+  const timeTaken = Math.max(0, Number(req.body?.timeTaken) || 0)
+  const expectedTurn = typeof req.body?.player === 'string' ? req.body.player : null
+
+  const result = await gameService.skipTurn(gameId, resolvedPlayerId, expectedTurn, timeTaken)
+
+  res.status(200).json(new SuccessResponseDTO({
+    gameId: result.game.gameId,
+    skippedPlayer: result.skippedPlayer,
+    currentTurn: result.currentTurn,
+    timeTaken: result.timeTaken,
+    status: result.game.status,
+  }, 'Turn skipped').toJSON())
+})
+
 const joinGame = asyncHandler(async (req, res) => {
   const { gameId } = req.params
   const currentUser = req.user || buildGuestUser()
@@ -290,6 +309,7 @@ module.exports = {
   joinGame,
   makeMove,
   makeAIMove,
+  skipTurn,
   resignGame,
   abortGame,
   getGameReplay,

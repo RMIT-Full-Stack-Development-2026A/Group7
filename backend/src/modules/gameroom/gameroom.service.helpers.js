@@ -4,7 +4,7 @@ const mongoose = require('mongoose')
 const gameroomRepository = require('./gameroom.repository')
 const User = require('../auth/auth.model')
 
-const DEFAULT_MARKER_BY_SIZE = { 2: 'X', 3: 'X', 4: 'X' }
+const DEFAULT_MARKER_BY_SIZE = { 2: 'X', 3: 'X' }
 
 const SAFE_MARKERS = ['X', 'O', 'Circle', 'Star', 'Triangle', 'Heart']
 
@@ -34,6 +34,13 @@ const normalizeMarker = (marker) => {
 const normalizeMarkerColor = (color) => {
   const normalized = String(color || '').trim()
   return /^#[0-9a-f]{6}$/i.test(normalized) ? normalized.toLowerCase() : ''
+}
+
+const normalizeSupportedRoomSize = (size, fallback = 2) => {
+  const parsed = Number(size)
+  if (parsed === 2 || parsed === 3) return parsed
+  if (parsed > 3) return 3
+  return fallback
 }
 
 const generateUniqueMarkerColor = (usedColors = new Set()) => {
@@ -206,6 +213,7 @@ module.exports = {
   DEFAULT_MARKER_BY_SIZE,
   MAX_CHAT_MESSAGE_LENGTH,
   generateUniqueRoomId,
+  normalizeSupportedRoomSize,
   normalizeMarker,
   normalizeMarkerColor,
   generateUniqueMarkerColor,

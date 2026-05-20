@@ -11,6 +11,7 @@ import {
   buildAISlot,
   buildLocalPlayerSlot,
   isRemovableSlot,
+  normalizeSupportedRoomSize,
   buildGameStartPayload as buildGameStartPayloadPure,
   validateStartGame,
 } from '../utils/gameroom.page.utils.js';
@@ -60,7 +61,7 @@ export function useGameroomActions({
   const handleCreateRoom = useCallback((room) => {
     if (!room) return;
     setRoomData(room);
-    setRoomSize(Number(room.size) || 4);
+    setRoomSize(normalizeSupportedRoomSize(room.size));
     setPlayers(mapRoomPlayersToSlots(room, authIdentity));
     setHasHydratedRoomPlayers(true);
   }, [authIdentity, setHasHydratedRoomPlayers, setPlayers, setRoomData, setRoomSize]);
@@ -189,7 +190,7 @@ export function useGameroomActions({
       }
     }
     setRoomData(null);
-    setRoomSize(4);
+    setRoomSize(2);
     setMessages([]);
     resetRoom();
     navigate(returnToRoute);

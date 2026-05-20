@@ -6,7 +6,6 @@ import { SAFE_MARKER_OPTIONS } from '../../../shared/utils/marker.utils.js';
 const MARKER_OPTIONS_BY_PLAYERS = {
   2: SAFE_MARKER_OPTIONS,
   3: SAFE_MARKER_OPTIONS,
-  4: SAFE_MARKER_OPTIONS,
 };
 
 const BOARD_STYLES = ['Classic', 'Modern', 'Minimal'];

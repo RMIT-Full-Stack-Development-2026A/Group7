@@ -24,6 +24,7 @@ router.post('/local-history', optionalAuthenticate, requireActiveAccount, gameCo
 router.post('/:gameId/join', optionalAuthenticate, requireActiveAccount, validateJoinGameRequest, gameController.joinGame)
 router.post('/:gameId/move', optionalAuthenticate, requireActiveAccount, gameController.makeMove)
 router.post('/:gameId/ai-move', optionalAuthenticate, requireActiveAccount, gameController.makeAIMove)
+router.post('/:gameId/skip-turn', optionalAuthenticate, requireActiveAccount, gameController.skipTurn)
 router.post('/:gameId/resign', optionalAuthenticate, requireActiveAccount, validateResignGameRequest, gameController.resignGame)
 router.post('/:gameId/abort', optionalAuthenticate, requireActiveAccount, gameController.abortGame)
 

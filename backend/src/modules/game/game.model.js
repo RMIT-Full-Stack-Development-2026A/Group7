@@ -13,7 +13,7 @@ const MoveSchema = new mongoose.Schema({
   },
   player: {
     type: String,
-    enum: ['X', 'O', 'P1', 'P2', 'P3', 'P4'],
+    enum: ['X', 'O', 'P1', 'P2', 'P3'],
     required: true
   },
   row: {
@@ -42,7 +42,7 @@ const MoveSchema = new mongoose.Schema({
 const GameResultSchema = new mongoose.Schema({
   winner: {
     type: String,
-    enum: ['X', 'O', 'P1', 'P2', 'P3', 'P4', 'draw', null],
+    enum: ['X', 'O', 'P1', 'P2', 'P3', 'draw', null],
     default: null
   },
   winReason: {
@@ -181,7 +181,7 @@ const GameSchema = new mongoose.Schema({
   // Game state
   currentTurn: {
     type: String,
-    enum: ['X', 'O', 'P1', 'P2', 'P3', 'P4'],
+    enum: ['X', 'O', 'P1', 'P2', 'P3'],
     required: true
   },
   status: {
