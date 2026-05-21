@@ -85,11 +85,36 @@ async function patchUser(req, res, next) {
   } catch (err) { next(err) }
 }
 
+// Rooms inactive longer than this are treated as abandoned and force-closed
+// when the admin lobby is queried. Players have a max think time of 120s, so
+// 1h of zero updates (no moves, chat, settings changes, joins) is unambiguous.
+const STALE_ROOM_MS = 60 * 60 * 1000
+
+async function closeStaleRooms() {
+  const staleCutoff = new Date(Date.now() - STALE_ROOM_MS)
+  await Gameroom.updateMany(
+    {
+      status: { $in: ['available', 'full', 'in-battle'] },
+      updatedAt: { $lt: staleCutoff },
+    },
+    [
+      {
+        $set: {
+          status: 'completed',
+          endedAt: { $ifNull: ['$endedAt', '$updatedAt'] },
+        },
+      },
+    ],
+  ).catch(() => null)
+}
+
 // ─── GET /api/admin/games?status= ─────────────────────────────────────────
 // FIX: lists Gamerooms (not GameSession) — that is what app-test tracks.
 // Gameroom statuses: 'available' | 'full' | 'in-battle' | 'completed'
 async function getGames(req, res, next) {
   try {
+    await closeStaleRooms()
+
     const { status, q } = req.query
     const filter = {}
 
