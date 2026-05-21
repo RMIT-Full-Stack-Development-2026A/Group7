@@ -10,3 +10,4 @@ backend/mongosh.exe
 .tmp/
 .DS_Store
 Thumbs.db
+PROJECT_SUMMARY.txt
