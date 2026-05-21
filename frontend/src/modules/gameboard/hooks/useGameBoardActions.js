@@ -141,6 +141,44 @@ export const useGameBoardActions = ({
     }
   }, [applyTurnSkip, authIdentity?.id, authIdentity?.name, authIdentity?.userId, authIdentity?.username, isRoomMultiplayerGame, roomData?.roomId])
 
+  // Admin can close a room (status 'in-battle' or otherwise) at any time. The
+  // socket broadcast must kick every player from the live match — including
+  // single-player/AI rooms where the multiplayer effect above never attaches —
+  // and the active Game record must be deleted so the aborted match never
+  // surfaces in game history.
+  useEffect(() => {
+    if (!roomData?.roomId) return undefined
+
+    const viewerId = authIdentity?.userId || authIdentity?.id || 'anonymous'
+    const viewerName = authIdentity?.name || authIdentity?.username || 'Player'
+    gameroomSocketService.joinRoom({ roomId: roomData.roomId, playerId: viewerId, playerName: viewerName })
+
+    const handleAdminClose = async (payload = {}) => {
+      if (String(payload?.roomId) !== String(roomData.roomId)) return
+      if (refs.gameOverRef.current) return
+      refs.gameOverRef.current = true
+      setters.setMoveMakingState(false)
+      setters.setShowPopup(false)
+      setters.setShowSettingsMenu(false)
+      setters.setShowGiveUpConfirm(false)
+      setters.setGameOver(true)
+
+      if (state.useRemoteSession && state.gameId) {
+        try { await gameAPI.abortGame(state.gameId) }
+        catch (error) { console.error('Failed to abort game on admin close:', error) }
+      }
+
+      if (onGameEnd) onGameEnd(null)
+      window.alert(payload?.message || 'This match has been closed by an admin.')
+      navigate(ROUTES.MAIN_MENU)
+    }
+
+    const unsubscribeAdminClose = gameroomSocketService.on('room-closed-by-admin', handleAdminClose)
+    return () => {
+      unsubscribeAdminClose()
+    }
+  }, [authIdentity?.id, authIdentity?.name, authIdentity?.userId, authIdentity?.username, navigate, onGameEnd, refs.gameOverRef, roomData?.roomId, setters, state.gameId, state.useRemoteSession])
+
   const skipCurrentTurn = useCallback(async () => {
     if (refs.gameOverRef.current) return
 
