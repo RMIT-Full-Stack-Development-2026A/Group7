@@ -2,11 +2,13 @@
   "name": "tictactoang",
   "private": true,
   "version": "1.0.0",
+  "main": "index.js",
   "workspaces": [
     "frontend",
     "backend"
   ],
   "scripts": {
+    "start": "node index.js",
     "install:all": "npm install --workspaces",
     "dev:frontend": "npm --workspace frontend run dev",
     "dev:backend": "npm --workspace backend run dev",

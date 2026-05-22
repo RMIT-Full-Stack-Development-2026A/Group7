@@ -5,7 +5,7 @@ const defaultGameSettings = {
   boardStyle: 'Classic',
   boardSize: '10x10',
   marker: 'X',
-  timeToThink: 60,
+  timeToThink: 240,
   gameMode: 'classic',
 };
 

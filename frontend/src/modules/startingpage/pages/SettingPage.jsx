@@ -9,6 +9,7 @@ import '../styles/SettingPage.css';
 import ROUTES from '../../../router/routes.config.js';
 import { applyThemeToDocument, loadGameSettings, saveGameSettings } from '../../../shared/utils/gameSettings.js';
 import { socialService } from '../../social/services/socialService.js';
+import { logoutPlayer } from '../../login/services/authService.js';
 
 export default function SettingPage() {
   const navigate = useNavigate();
@@ -50,6 +51,10 @@ export default function SettingPage() {
     }
 
     await socialService.updatePresence(false).catch(() => null);
+    // Tell the backend to add the current JWT to its deny-list so the same
+    // token cannot be reused if it leaks. Done before clearing localStorage so
+    // the httpHelper can still attach the Bearer header.
+    await logoutPlayer();
     localStorage.removeItem('token');
     localStorage.removeItem('authUser');
     navigate(ROUTES.LOGIN, { replace: true });

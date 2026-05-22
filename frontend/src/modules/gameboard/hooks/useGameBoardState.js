@@ -14,6 +14,10 @@ export const useGameBoardState = (emptyBoard, normalizedTimeControl) => {
   const remoteAIMoveRequestRef = useRef({ id: 0 })
   const localMovesRef = useRef([])
   const lastMoveStartedAtRef = useRef(null)
+  // Chess-clock banks. Each entry is the player's remaining seconds; only the
+  // active player's clock counts down. Populated lazily on match reset.
+  const playerClocksRef = useRef({})
+  const previousPlayerRef = useRef(null)
 
   const [board, setBoard] = useState(emptyBoard)
   const [currentPlayer, setCurrentPlayer] = useState('X')
@@ -46,6 +50,8 @@ export const useGameBoardState = (emptyBoard, normalizedTimeControl) => {
     localHistorySavedRef,
     localMovesRef,
     matchStartedAtRef,
+    playerClocksRef,
+    previousPlayerRef,
     remoteAIMoveRequestRef,
     roomCleanupDoneRef,
     timeoutHandledForTurnRef,
@@ -60,6 +66,8 @@ export const useGameBoardState = (emptyBoard, normalizedTimeControl) => {
     localHistorySavedRef,
     localMovesRef,
     matchStartedAtRef,
+    playerClocksRef,
+    previousPlayerRef,
     remoteAIMoveRequestRef,
     roomCleanupDoneRef,
     timeoutHandledForTurnRef,

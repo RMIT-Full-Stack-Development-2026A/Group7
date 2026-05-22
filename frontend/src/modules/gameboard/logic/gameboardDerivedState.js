@@ -31,6 +31,14 @@ export const getHumanSymbol = (isAIGame, aiSymbol) => {
   return aiSymbol === 'X' ? 'O' : 'X'
 }
 
+const resolveViewerSymbolForPlayers = ({ players, authIdentity }) => {
+  const viewerId = authIdentity?.userId || authIdentity?.id
+  if (!viewerId) return null
+  if (players?.X?.userId && String(players.X.userId) === String(viewerId)) return 'X'
+  if (players?.O?.userId && String(players.O.userId) === String(viewerId)) return 'O'
+  return null
+}
+
 export const getResolvedPlayers = ({
   roomData,
   isAIGame,
@@ -45,22 +53,30 @@ export const getResolvedPlayers = ({
     return resolvedPlayers
   }
 
-  if (!isAIGame) {
-    return {
-      ...resolvedPlayers,
-      X: {
-        ...resolvedPlayers.X,
-        avatar: resolvedPlayers.X.avatar || resolveAvatarUrl(authIdentity.avatar, { fallbackToDefault: false }),
-      },
+  // For AI singleplayer games the viewer always controls the human slot.
+  if (isAIGame) {
+    if (humanSymbol && resolvedPlayers[humanSymbol]) {
+      return {
+        ...resolvedPlayers,
+        [humanSymbol]: {
+          ...resolvedPlayers[humanSymbol],
+          avatar: resolvedPlayers[humanSymbol].avatar || resolveAvatarUrl(authIdentity.avatar, { fallbackToDefault: false }),
+        },
+      }
     }
+    return resolvedPlayers
   }
 
-  if (humanSymbol && resolvedPlayers[humanSymbol]) {
+  // Multiplayer / local: only fill the viewer's own slot from their auth identity.
+  // Filling the wrong slot would make a remote viewer see their own avatar in
+  // the opponent's seat (bug seen when two browsers share a device).
+  const viewerSymbol = resolveViewerSymbolForPlayers({ players: resolvedPlayers, authIdentity })
+  if (viewerSymbol && resolvedPlayers[viewerSymbol]) {
     return {
       ...resolvedPlayers,
-      [humanSymbol]: {
-        ...resolvedPlayers[humanSymbol],
-        avatar: resolvedPlayers[humanSymbol].avatar || resolveAvatarUrl(authIdentity.avatar, { fallbackToDefault: false }),
+      [viewerSymbol]: {
+        ...resolvedPlayers[viewerSymbol],
+        avatar: resolvedPlayers[viewerSymbol].avatar || resolveAvatarUrl(authIdentity.avatar, { fallbackToDefault: false }),
       },
     }
   }

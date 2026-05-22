@@ -1,6 +1,9 @@
 const { ErrorResponse } = require('../../shared/errors/AppErrors')
 const User = require('../auth/auth.model')
-const gameroomService = require('../gameroom/gameroom.service')
+// Use the gameroom module's public interface, not its internal service file
+// (see backend/src/modules/gameroom/index.js for the contract). This keeps the
+// A.3.1 boundary explicit: social only knows the published API.
+const gameroomService = require('../gameroom')
 const { FriendRequest, Friendship, RoomInvite } = require('./social.model')
 const {
   PUBLIC_USER_SELECT,

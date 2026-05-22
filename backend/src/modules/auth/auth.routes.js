@@ -10,6 +10,7 @@ const router = express.Router()
 router.get('/', authenticate, authorizeAdmin, ctrl.getAllUsers)
 router.post('/register', ctrl.register)
 router.post('/login', bruteForce, ctrl.login)
+router.post('/logout', authenticate, ctrl.logout)
 router.post('/change-password', authenticate, ctrl.changePassword)
 
 module.exports = router

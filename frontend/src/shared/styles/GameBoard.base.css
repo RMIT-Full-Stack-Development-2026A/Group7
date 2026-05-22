@@ -173,6 +173,12 @@ body[data-app-theme='light'] {
   gap: 16px;
 }
 
+/* Two-card variant (no central pill). Each card holds the player's own clock. */
+.gameboard-lite-header-split {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 18px;
+}
+
 .gameboard-lite-player {
   display: flex;
   align-items: center;
@@ -190,6 +196,20 @@ body[data-app-theme='light'] {
   background: var(--gb-panel-active);
   border-color: var(--gb-panel-border-active);
   box-shadow: var(--gb-panel-shadow-active);
+}
+
+.gameboard-lite-player-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.gameboard-lite-clock-slot {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .gameboard-lite-avatar {
@@ -235,12 +255,39 @@ body[data-app-theme='light'] {
   justify-content: center;
   gap: 8px;
   min-width: 84px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Compact variant lives inside a player card — no chip background, just text. */
+.timer-display-compact {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--gb-shell-fg);
+  font-size: 0.95rem;
+  font-weight: 800;
+  min-width: 84px;
+  white-space: nowrap;
+}
+
+.gameboard-lite-player.active .timer-display-compact {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(255, 255, 255, 0.6);
+  color: var(--gb-status-fg);
+  box-shadow: 0 10px 20px rgba(10, 20, 40, 0.18);
 }
 
 .timer-value { font-variant-numeric: tabular-nums; }
 .timer-normal { color: var(--gb-status-fg); }
 .timer-warning { color: #d97706; }
-.timer-critical { color: #dc2626; }
+.timer-critical { color: #dc2626; animation: timerPulse 1s ease-in-out infinite; }
+.timer-idle { color: var(--gb-muted); opacity: 0.78; }
+
+@keyframes timerPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
 
 .board-container {
   width: auto;

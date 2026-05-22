@@ -113,6 +113,17 @@ async function seedAuthUsers() {
   }
 
   console.log(`Seeded auth users: ${users.map((user) => user.email).join(', ')}`)
+  printSeedCredentialBanner()
+}
+
+function printSeedCredentialBanner() {
+  const labelWidth = Math.max(...SEED_USERS.map((user) => user.name.length))
+
+  console.log('')
+  console.log('Seed complete.')
+  SEED_USERS.forEach((user) => {
+    console.log(`${user.name.padEnd(labelWidth, ' ')} -> ${user.email} / ${user.plainPassword}`)
+  })
 }
 
 async function runStandaloneSeed() {
@@ -120,12 +131,6 @@ async function runStandaloneSeed() {
   console.log(`MongoDB connected: ${mongoose.connection.host}/${mongoose.connection.name}`)
 
   await seedAuthUsers()
-
-  console.log('')
-  console.log('Seed complete.')
-  console.log('Admin   -> admin@tictactoang.com / Admin@1234')
-  console.log('PlayerA -> playera@tictactoang.com / PlayerA@123')
-  console.log('PlayerB -> playerb@tictactoang.com / PlayerB@123')
 
   await mongoose.disconnect()
 }

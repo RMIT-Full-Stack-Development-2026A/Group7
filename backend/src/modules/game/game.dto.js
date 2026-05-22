@@ -29,8 +29,8 @@ class CreateGameDTO {
     if (!validBoardSizes.includes(this.boardSize)) {
       throw new Error('Invalid boardSize. Must be 10 or 15');
     }
-    if (this.timeControl < 30 || this.timeControl > 300) {
-      throw new Error('timeControl must be between 30 and 300 seconds');
+    if (this.timeControl < 30 || this.timeControl > 720) {
+      throw new Error('timeControl must be between 30 and 720 seconds');
     }
     if (this.gameMode === 'singleplayer') {
       if (!validOpponentTypes.includes(this.opponentType)) {

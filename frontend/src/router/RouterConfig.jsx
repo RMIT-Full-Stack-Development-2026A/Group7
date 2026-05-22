@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import ROUTES from './routes.config.js'
+import RequireRole from './RequireRole.jsx'
 import LoginPage from '../modules/login/page/LoginPage.jsx'
 import RegisterPage from '../modules/register/page/RegisterPage.jsx'
 import CreateRoomPage from '../modules/gameroom/pages/CreateRoomPage.jsx'
@@ -17,6 +18,7 @@ import { GameLoadingPage } from '../modules/startingpage/pages/GameLoadingPage.j
 import { GameVsComputer } from '../modules/startingpage/pages/GameVsComputer.jsx'
 import { GameVsFriend } from '../modules/startingpage/pages/GameVsFriend.jsx'
 import { NotFound } from '../modules/startingpage/pages/NotFound.jsx'
+import { Forbidden403 } from '../modules/startingpage/pages/Forbidden403.jsx'
 
 const getDefaultRoute = () => (localStorage.getItem('token') ? ROUTES.MAIN_MENU : ROUTES.LOGIN)
 
@@ -37,7 +39,15 @@ const RouterConfig = () => (
     <Route path={ROUTES.SETTINGS} element={<SettingPage />} />
     <Route path={ROUTES.SETTING_PAGE} element={<SettingPage />} />
     <Route path={ROUTES.SUBSCRIPTION} element={<Subscription />} />
-    <Route path={ROUTES.ADMIN} element={<AdminPanel />} />
+    <Route
+      path={ROUTES.ADMIN}
+      element={(
+        <RequireRole role="admin">
+          <AdminPanel />
+        </RequireRole>
+      )}
+    />
+    <Route path={ROUTES.FORBIDDEN} element={<Forbidden403 />} />
     <Route path={ROUTES.GAME_LOADING} element={<GameLoadingPage />} />
     <Route path={ROUTES.VS_COMPUTER} element={<GameVsComputer />} />
     <Route path={ROUTES.VS_FRIEND} element={<GameVsFriend />} />

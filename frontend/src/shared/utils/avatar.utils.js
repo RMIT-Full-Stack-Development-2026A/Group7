@@ -5,8 +5,33 @@ export const AI_AVATAR = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9Gc
 
 const BACKEND_ORIGIN = getBackendOrigin()
 
+// Paths that look like a bundled or asset URL (built by Vite/webpack).
+// These resolve correctly for the browser that produced them, but break for
+// any other browser, so we treat them as "no avatar set" when normalizing for
+// network transmission and fall back to the shared default for rendering.
+const isBundledAssetPath = (value = '') => {
+  const normalized = String(value || '').toLowerCase()
+  return (
+    normalized.includes('/assets/mambo')
+    || normalized.includes('\\assets\\mambo')
+    || /\/assets\/[^/]+-[a-f0-9]{6,}\.[a-z]+$/i.test(normalized)
+  )
+}
+
+const isUnshareableAvatar = (value = '') => {
+  const normalized = String(value || '')
+  if (!normalized) return true
+  if (normalized === 'Mambo.png') return true
+  if (normalized.startsWith('blob:')) return true
+  if (normalized.startsWith('file:')) return true
+  if (isBundledAssetPath(normalized)) return true
+  return false
+}
+
 export const resolveAvatarUrl = (avatar, { isAI = false, fallbackToDefault = true } = {}) => {
-  if (!avatar || avatar === 'Mambo.png') {
+  const value = avatar == null ? '' : String(avatar)
+
+  if (!value || value === 'Mambo.png') {
     if (!fallbackToDefault) {
       return ''
     }
@@ -14,7 +39,7 @@ export const resolveAvatarUrl = (avatar, { isAI = false, fallbackToDefault = tru
     return isAI ? AI_AVATAR : MamboAvatar
   }
 
-  if (avatar.startsWith('blob:')) {
+  if (value.startsWith('blob:') || value.startsWith('file:')) {
     if (!fallbackToDefault) {
       return ''
     }
@@ -23,17 +48,26 @@ export const resolveAvatarUrl = (avatar, { isAI = false, fallbackToDefault = tru
   }
 
   if (
-    avatar.startsWith('http')
-    || avatar.startsWith('data:')
+    value.startsWith('http')
+    || value.startsWith('data:')
   ) {
-    return avatar
+    return value
   }
 
-  if (avatar.startsWith('/')) {
-    return `${BACKEND_ORIGIN}${avatar}`
+  if (value.startsWith('/')) {
+    return `${BACKEND_ORIGIN}${value}`
   }
 
-  return `${BACKEND_ORIGIN}/${avatar.replace(/^\/+/, '')}`
+  return `${BACKEND_ORIGIN}/${value.replace(/^\/+/, '')}`
+}
+
+// Strip avatar values that only make sense locally (Vite-bundled paths, blob
+// URLs, the literal 'Mambo.png' placeholder) so they aren't broadcast to other
+// clients. Returns a value that is safe to send over the socket or persist.
+export const sanitizeAvatarForTransport = (avatar = '') => {
+  const value = avatar == null ? '' : String(avatar)
+  if (isUnshareableAvatar(value)) return ''
+  return value
 }
 
 export const getRawAvatarValue = (avatar = '') => {

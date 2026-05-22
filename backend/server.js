@@ -1,7 +1,7 @@
 const path = require('node:path')
 require('dotenv').config({ path: path.join(__dirname, '.env') })
 const http = require('node:http')
-const app = require('./src/app')
+const app = require('./src')
 const connectDB = require('./src/config/db')
 const { seedAuthUsers } = require('./seed/seed')
 const { ensureProfileSeedData } = require('./src/modules/profile/profile.model')

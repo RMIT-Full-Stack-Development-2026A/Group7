@@ -162,6 +162,7 @@ const createCompletedLocalGame = async (gameData) => {
   const {
     boardSize = 10, timeControl = 60, participants = [],
     winner = 'draw', winningTiles = [], totalMoves = 0, startedAt, moves: rawMoves = [],
+    status: rawStatus = 'completed',
   } = gameData
 
   if (![10, 15].includes(boardSize)) throw new Error('Board size must be 10 or 15')
@@ -172,11 +173,17 @@ const createCompletedLocalGame = async (gameData) => {
     throw new Error('At most three participants are supported')
   }
 
+  const normalizedStatus = rawStatus === 'abandoned' ? 'abandoned' : 'completed'
+  const isAbandoned = normalizedStatus === 'abandoned'
   const sanitizedMoves = sanitizeMoves(rawMoves, boardSize)
   const normalized = normalizeParticipants(participants)
   const [firstPlayer, secondPlayer] = normalized
   const completedAt = new Date()
   const resolvedStartedAt = startedAt ? new Date(startedAt) : completedAt
+  const resolvedWinner = isAbandoned ? null : winner
+  const resolvedWinReason = isAbandoned
+    ? 'resignation'
+    : (winner === 'draw' ? 'draw_agreement' : 'five_in_row')
 
   return gameRepository.createGame({
     gameId: generateGameId(),
@@ -189,12 +196,12 @@ const createCompletedLocalGame = async (gameData) => {
     },
     participants: normalized,
     currentTurn: normalized[0]?.playerSymbol || 'P1',
-    status: 'completed',
+    status: normalizedStatus,
     moves: sanitizedMoves,
     result: {
-      winner,
-      winReason: winner === 'draw' ? 'draw_agreement' : 'five_in_row',
-      winningTiles,
+      winner: resolvedWinner,
+      winReason: resolvedWinReason,
+      winningTiles: isAbandoned ? [] : winningTiles,
       totalMoves: sanitizedMoves.length > 0 ? sanitizedMoves.length : totalMoves,
     },
     startedAt: Number.isNaN(resolvedStartedAt.getTime()) ? completedAt : resolvedStartedAt,

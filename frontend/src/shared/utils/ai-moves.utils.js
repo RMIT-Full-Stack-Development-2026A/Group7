@@ -1,6 +1,5 @@
 // AI move selection for each difficulty tier. Pure functions — no React.
 import {
-  createsLineWithBlockedEnds,
   getEmptyTiles,
   isDoubleThree,
   isRealThreat,
@@ -55,16 +54,34 @@ const pickBestScoreMove = (emptyTiles, board, aiPlayer, humanPlayer) => {
   return bestMove
 }
 
-const getEasyMove = (board, humanPlayer) => {
-  const emptyTiles = getEmptyTiles(board)
-  const winningBlockMoves = emptyTiles.filter(({ row, col }) => wouldWin(board, row, col, humanPlayer))
-  if (winningBlockMoves.length) return getRandomMove(winningBlockMoves)
+// Spec 4.2.3: Easy AI must "randomly choose an empty cell immediately adjacent
+// to the player's last move". Adjacency = the 8 surrounding cells (king moves).
+const getAdjacentEmptyTiles = (board, lastMove) => {
+  if (!lastMove
+    || !Number.isInteger(lastMove.row)
+    || !Number.isInteger(lastMove.col)
+  ) {
+    return []
+  }
+  const size = board.length
+  const tiles = []
+  for (let dr = -1; dr <= 1; dr += 1) {
+    for (let dc = -1; dc <= 1; dc += 1) {
+      if (dr === 0 && dc === 0) continue
+      const row = lastMove.row + dr
+      const col = lastMove.col + dc
+      if (row < 0 || row >= size || col < 0 || col >= size) continue
+      if (board[row][col] === null) tiles.push({ row, col })
+    }
+  }
+  return tiles
+}
 
-  const openThreeBlockMoves = emptyTiles.filter(({ row, col }) =>
-    createsLineWithBlockedEnds(board, row, col, humanPlayer, 4, 0))
-  if (openThreeBlockMoves.length) return getRandomMove(openThreeBlockMoves)
-
-  return getRandomMove(emptyTiles)
+const getEasyMove = (board, _humanPlayer, lastHumanMove = null) => {
+  const adjacentTiles = getAdjacentEmptyTiles(board, lastHumanMove)
+  if (adjacentTiles.length) return getRandomMove(adjacentTiles)
+  // Edge case: no human move yet or its neighbours are filled — random fallback.
+  return getRandomMove(getEmptyTiles(board))
 }
 
 // Medium uses the previous Hard heuristic ladder (one-ply tactical scoring).
@@ -242,15 +259,18 @@ const getHardMove = (board, aiPlayer, humanPlayer) => {
   return getRandomMove(emptyTiles)
 }
 
-export function getAIMove(board, difficulty = 'medium', aiPlayer = 'O', humanPlayer = 'X') {
+export function getAIMove(board, difficulty = 'medium', aiPlayer = 'O', humanPlayer = 'X', lastHumanMove = null) {
   const emptyTiles = getEmptyTiles(board)
   if (!emptyTiles.length) return null
+
+  // Spec note: Easy AI is intentionally limited to random adjacent moves and
+  // skips the global winning-move shortcut other difficulties take.
+  if (difficulty === 'easy') return getEasyMove(board, humanPlayer, lastHumanMove)
 
   const winningMove = getWinningMove(board, aiPlayer, emptyTiles)
   if (winningMove) return winningMove
 
   switch (difficulty) {
-    case 'easy': return getEasyMove(board, humanPlayer)
     case 'medium': return getMediumMove(board, aiPlayer, humanPlayer)
     case 'hard': return getHardMove(board, aiPlayer, humanPlayer)
     default: return getRandomMove(emptyTiles)
