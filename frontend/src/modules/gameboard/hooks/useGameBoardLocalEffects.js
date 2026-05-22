@@ -36,6 +36,8 @@ export const useGameBoardLocalEffects = ({
     localHistorySavedRef,
     localMovesRef,
     matchStartedAtRef,
+    playerClocksRef,
+    previousPlayerRef,
     roomCleanupDoneRef,
     timeoutHandledForTurnRef,
     turnStartedAtRef,
@@ -69,8 +71,16 @@ export const useGameBoardLocalEffects = ({
         if (isCancelled || gameOverRef.current
           || currentPlayerRef.current !== currentLocalPlayer.token) return
 
+        const recordedMoves = Array.isArray(localMovesRef?.current) ? localMovesRef.current : []
+        const lastNonAIMove = [...recordedMoves]
+          .reverse()
+          .find((entry) => entry?.player !== currentLocalPlayer.token) || null
+
         const move = pickExpandedLocalAIMove({
-          board: boardRef.current, currentLocalPlayer, localTurnPlayers,
+          board: boardRef.current,
+          currentLocalPlayer,
+          localTurnPlayers,
+          lastMove: lastNonAIMove ? { row: lastNonAIMove.row, col: lastNonAIMove.col } : null,
         })
 
         if (move) {
@@ -86,22 +96,43 @@ export const useGameBoardLocalEffects = ({
 
     makeExpandedLocalAIMove()
     return () => { isCancelled = true }
-  }, [aiDifficulty, applyLocalMove, boardRef, currentLocalPlayer, currentPlayerRef, gameOver, gameOverRef, isExpandedLocalGame, isMakingMoveRef, localTurnPlayers, normalizedTimeControl, onExpandedLocalAIMove, setMoveMakingState, shouldRunExpandedLocalAI])
+  }, [aiDifficulty, applyLocalMove, boardRef, currentLocalPlayer, currentPlayerRef, gameOver, gameOverRef, isExpandedLocalGame, isMakingMoveRef, localMovesRef, localTurnPlayers, normalizedTimeControl, onExpandedLocalAIMove, setMoveMakingState, shouldRunExpandedLocalAI])
 
+  // Chess-clock turn-change handler: deduct the time the previous player just
+  // spent from THEIR bank, then start ticking the new player's bank.
   useEffect(() => {
-    turnStartedAtRef.current = Date.now()
-    setSecondsLeft(normalizedTimeControl)
+    if (!playerClocksRef || !previousPlayerRef) return
+
+    // Lazy-init the bank for any token we haven't seen yet (covers the very
+    // first effect run before resetMatchState has populated playerClocksRef).
+    if (typeof playerClocksRef.current[currentPlayer] !== 'number') {
+      playerClocksRef.current[currentPlayer] = normalizedTimeControl
+    }
+
+    const previousPlayer = previousPlayerRef.current
+    const now = Date.now()
+    if (previousPlayer && previousPlayer !== currentPlayer && turnStartedAtRef.current) {
+      const elapsedSeconds = Math.max(0, (now - turnStartedAtRef.current) / 1000)
+      const previousBank = playerClocksRef.current[previousPlayer] ?? normalizedTimeControl
+      playerClocksRef.current[previousPlayer] = Math.max(0, previousBank - elapsedSeconds)
+    }
+
+    previousPlayerRef.current = currentPlayer
+    turnStartedAtRef.current = now
     timeoutHandledForTurnRef.current = null
-  }, [currentPlayer, normalizedTimeControl, setSecondsLeft, timeoutHandledForTurnRef, turnStartedAtRef])
+    setSecondsLeft(Math.ceil(playerClocksRef.current[currentPlayer] ?? normalizedTimeControl))
+  }, [currentPlayer, normalizedTimeControl, playerClocksRef, previousPlayerRef, setSecondsLeft, timeoutHandledForTurnRef, turnStartedAtRef])
 
   useEffect(() => {
     if (gameOver) return undefined
     const timer = window.setInterval(() => {
-      const elapsedSeconds = Math.floor((Date.now() - turnStartedAtRef.current) / 1000)
-      setSecondsLeft(Math.max(normalizedTimeControl - elapsedSeconds, 0))
+      const banked = playerClocksRef?.current?.[currentPlayer] ?? normalizedTimeControl
+      const elapsedSeconds = Math.max(0, (Date.now() - (turnStartedAtRef.current || Date.now())) / 1000)
+      const remaining = Math.max(0, Math.ceil(banked - elapsedSeconds))
+      setSecondsLeft(remaining)
     }, 250)
     return () => window.clearInterval(timer)
-  }, [currentPlayer, gameOver, normalizedTimeControl, setSecondsLeft, turnStartedAtRef])
+  }, [currentPlayer, gameOver, normalizedTimeControl, playerClocksRef, setSecondsLeft, turnStartedAtRef])
 
   useEffect(() => {
     const handleKeyDown = (event) => {

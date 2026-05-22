@@ -36,6 +36,15 @@ const login = async (req, res, next) => {
   }
 }
 
+const logout = async (req, res, next) => {
+  try {
+    const result = authService.logout(req.token)
+    return res.status(200).json({ success: true, message: 'Logged out.', revoked: Boolean(result?.revoked) })
+  } catch (err) {
+    next(err)
+  }
+}
+
 const changePassword = async (req, res, next) => {
   try {
     const { oldPassword, newPassword, confirmNewPassword } = req.body || {}
@@ -62,5 +71,6 @@ module.exports = {
   getAllUsers,
   register,
   login,
+  logout,
   changePassword,
 }

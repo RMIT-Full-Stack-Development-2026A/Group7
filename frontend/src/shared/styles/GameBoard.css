@@ -1,4 +1,7 @@
 @import './GameBoard.base.css';
 @import './GameBoard.tiles.css';
 @import './GameBoard.styles.css';
+@import './GameBoard.classic.css';
+@import './GameBoard.coords.css';
 @import './GameBoard.turn-order.css';
+@import '../../modules/gameroom/styles/gameroom.chat.css';

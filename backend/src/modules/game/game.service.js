@@ -166,7 +166,16 @@ const makeAIMove = async (gameId) => {
   const aiPlayer = game.players[aiSymbol]
   const humanSymbol = aiSymbol === 'X' ? 'O' : 'X'
   const board = getBoardStateFromMoves(game.moves, game.boardSize)
-  const move = aiLogicService.getAIMove(board, aiPlayer.aiDifficulty || 'medium', aiSymbol, humanSymbol)
+  const lastHumanMove = [...(game.moves || [])]
+    .reverse()
+    .find((move) => move?.player === humanSymbol) || null
+  const move = aiLogicService.getAIMove(
+    board,
+    aiPlayer.aiDifficulty || 'medium',
+    aiSymbol,
+    humanSymbol,
+    lastHumanMove ? { row: lastHumanMove.row, col: lastHumanMove.col } : null,
+  )
 
   if (!move) throw new Error('No valid AI move available')
 
@@ -228,12 +237,27 @@ const deleteGame = async (gameId) => {
   return game
 }
 
-const abortGame = async (gameId) => {
+const abortGame = async (gameId, { persist = true, reason = 'resignation' } = {}) => {
   const game = await gameRepository.findByGameId(gameId)
-  if (!game) return { gameId, deleted: false, alreadyMissing: true }
-  if (game.status === 'completed') return { gameId, deleted: false, alreadyCompleted: true }
-  await gameRepository.deleteGameByGameId(gameId)
-  return { gameId, deleted: true }
+  if (!game) return { gameId, deleted: false, abandoned: false, alreadyMissing: true }
+  if (game.status === 'completed') return { gameId, deleted: false, abandoned: false, alreadyCompleted: true }
+
+  if (!persist) {
+    await gameRepository.deleteGameByGameId(gameId)
+    return { gameId, deleted: true, abandoned: false }
+  }
+
+  const updated = await gameRepository.updateGameByGameId(gameId, {
+    status: 'abandoned',
+    completedAt: new Date(),
+    result: {
+      winner: null,
+      winReason: reason,
+      winningTiles: [],
+      totalMoves: game.moves.length,
+    },
+  })
+  return { gameId, deleted: false, abandoned: true, game: updated }
 }
 
 const cleanupAbandonedGames = async (minutesOld = 60) => {

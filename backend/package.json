@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "Backend for TicTacToang",
   "private": true,
-  "main": "server.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js",
+    "start": "node index.js",
+    "dev": "nodemon index.js",
     "seed": "node seed/seed.js",
     "test:smtp": "node scripts/test-smtp.js",
     "test:smtp:send": "node scripts/test-smtp.js --send"

@@ -83,7 +83,7 @@ const createGame = asyncHandler(async (req, res) => {
 })
 
 const createLocalHistory = asyncHandler(async (req, res) => {
-  const { boardSize, timeControl, participants, winner, winningTiles, totalMoves, startedAt, moves } = req.body || {}
+  const { boardSize, timeControl, participants, winner, winningTiles, totalMoves, startedAt, moves, status } = req.body || {}
 
   const game = await gameService.createCompletedLocalGame({
     boardSize,
@@ -94,6 +94,7 @@ const createLocalHistory = asyncHandler(async (req, res) => {
     totalMoves,
     startedAt,
     moves,
+    status,
   })
 
   res.status(201).json(new SuccessResponseDTO({
@@ -270,8 +271,12 @@ const resignGame = asyncHandler(async (req, res) => {
 })
 
 const abortGame = asyncHandler(async (req, res) => {
-  const result = await gameService.abortGame(req.params.gameId)
-  const message = result.deleted ? 'Game aborted and removed'
+  const persistFlag = req.body?.persist
+  const persist = persistFlag === undefined ? true : Boolean(persistFlag)
+  const reason = typeof req.body?.reason === 'string' ? req.body.reason : 'resignation'
+  const result = await gameService.abortGame(req.params.gameId, { persist, reason })
+  const message = result.abandoned ? 'Game saved as abandoned'
+    : result.deleted ? 'Game aborted and removed'
     : result.alreadyCompleted ? 'Game already completed; not removed'
     : 'Game not found'
   res.status(200).json(new SuccessResponseDTO(result, message).toJSON())

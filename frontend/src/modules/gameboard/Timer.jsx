@@ -1,16 +1,17 @@
 import React from 'react';
+import { formatClock } from './timer.utils.js';
 
-export default function Timer({ seconds, isActive }) {
+export default function Timer({ seconds, isActive, compact = false }) {
   const getTimerClass = () => {
     if (seconds <= 10) return 'timer-critical';
-    if (seconds <= 20) return 'timer-warning';
+    if (seconds <= 30) return 'timer-warning';
     return 'timer-normal';
   };
 
   return (
-    <div className={`timer-display ${isActive ? getTimerClass() : 'timer-normal'}`}>
-      <i className="bi bi-clock"> </i>
-      <div className="timer-value">{seconds}s</div>
+    <div className={`timer-display ${compact ? 'timer-display-compact' : ''} ${isActive ? getTimerClass() : 'timer-idle'}`}>
+      <i className="bi bi-clock" />
+      <div className="timer-value">{formatClock(seconds)}</div>
     </div>
   );
 }

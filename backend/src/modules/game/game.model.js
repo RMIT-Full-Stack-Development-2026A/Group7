@@ -163,9 +163,9 @@ const GameSchema = new mongoose.Schema({
   },
   timeControl: {
     type: Number,
-    default: 60,
+    default: 240,
     min: 30,
-    max: 300
+    max: 720
   },
   
   // Players

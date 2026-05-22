@@ -12,7 +12,9 @@ const validateBoardSize = (size) => validBoardSizes.includes(size)
 const validateGameMode = (mode) => validGameModes.includes(mode)
 const validateOpponentType = (type) => validOpponentTypes.includes(type)
 const validateAIDifficulty = (difficulty) => validAIDifficulties.includes(difficulty)
-const validateTimeControl = (time) => typeof time === 'number' && time >= 30 && time <= 300
+// timeControl = per-player chess-clock max bank in seconds. Allow 30s
+// (legacy) up to 720s (12-minute clock chosen in CreateRoom UI).
+const validateTimeControl = (time) => typeof time === 'number' && time >= 30 && time <= 720
 const validateMoveCoordinates = (row, col, boardSize) => (
   typeof row === 'number'
   && typeof col === 'number'
@@ -38,7 +40,7 @@ const assertCreateGameRequest = (body = {}) => {
   }
 
   if (timeControl !== undefined && !validateTimeControl(timeControl)) {
-    throw new ErrorResponse('Invalid timeControl. Must be between 30 and 300 seconds', 400)
+    throw new ErrorResponse('Invalid timeControl. Must be between 30 and 720 seconds', 400)
   }
 
   if (!opponentType) throw new ErrorResponse('Opponent type is required', 400)

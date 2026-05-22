@@ -10,14 +10,20 @@ const MARKER_OPTIONS_BY_PLAYERS = {
 
 const BOARD_STYLES = ['Classic', 'Modern', 'Minimal'];
 const BOARD_SIZES = ['10x10', '15x15'];
-const TIME_OPTIONS = [60, 75, 90, 105, 120];
+// Max-timer-per-player options: 4, 6, 8, 10, 12 minutes (chess-clock model).
+// timeToThink is the storage field name retained for backwards compatibility
+// with existing room records; the value now represents the per-player bank.
+export const MAX_TIMER_MIN_SECONDS = 240;   // 4 minutes
+export const MAX_TIMER_MAX_SECONDS = 720;   // 12 minutes
+export const MAX_TIMER_STEP_SECONDS = 120;  // 2 minute step
+const TIME_OPTIONS = [240, 360, 480, 600, 720];
 
 export function useRoomSettingsForm(onCreateRoom) {
   const [players, setPlayers] = useState(2);
   const [boardStyle, setBoardStyle] = useState('Classic');
   const [boardSize, setBoardSize] = useState('10x10');
   const [marker, setMarker] = useState(MARKER_OPTIONS_BY_PLAYERS[2][0].id);
-  const [timeToThink, setTimeToThink] = useState(60);
+  const [timeToThink, setTimeToThink] = useState(MAX_TIMER_MIN_SECONDS);
   const [roomName, setRoomName] = useState('Game Room');
   const [isLoading, setIsLoading] = useState(false);
   const [hostPosition, setHostPosition] = useState(1);
@@ -43,7 +49,8 @@ export function useRoomSettingsForm(onCreateRoom) {
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const sec = seconds % 60;
-    return sec === 0 ? `${minutes}:00` : `${minutes}:${sec}`;
+    const paddedSec = String(sec).padStart(2, '0');
+    return `${minutes}:${paddedSec}`;
   };
 
   const handleCreateRoom = async () => {
@@ -96,6 +103,9 @@ export function useRoomSettingsForm(onCreateRoom) {
     boardSizes: BOARD_SIZES,
     markerOptions,
     timeOptions: TIME_OPTIONS,
+    timerMinSeconds: MAX_TIMER_MIN_SECONDS,
+    timerMaxSeconds: MAX_TIMER_MAX_SECONDS,
+    timerStepSeconds: MAX_TIMER_STEP_SECONDS,
     setPlayers,
     setBoardStyle,
     setBoardSize,

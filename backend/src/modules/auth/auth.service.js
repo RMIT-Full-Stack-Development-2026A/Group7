@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const repo = require('./auth.repository')
 const { registerResponseDTO, loginResponseDTO } = require('./auth.dto')
+const tokenBlacklist = require('./auth.tokenBlacklist')
 
 const getAllUsers = async () =>
   repo.findAllUsers()
@@ -126,9 +127,25 @@ const changePassword = async (userId, { oldPassword, newPassword }) => {
   return true
 }
 
+// Revoke the bearer token used for this request so any further use of it fails
+// auth. We honour the token's natural expiry to bound the deny-list size.
+const logout = (token) => {
+  if (!token) return { revoked: false }
+  let expiresAtMs = 0
+  try {
+    const decoded = jwt.decode(token)
+    if (decoded?.exp) expiresAtMs = decoded.exp * 1000
+  } catch {
+    expiresAtMs = 0
+  }
+  tokenBlacklist.revoke(token, expiresAtMs)
+  return { revoked: true }
+}
+
 module.exports = {
   getAllUsers,
   register,
   login,
+  logout,
   changePassword,
 }

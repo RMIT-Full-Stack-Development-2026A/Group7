@@ -132,6 +132,13 @@
   font-weight: 900;
 }
 
+.gameboard-lines-clock-slot {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .gameboard-lines-order {
   align-self: flex-start;
   padding: 6px 10px;

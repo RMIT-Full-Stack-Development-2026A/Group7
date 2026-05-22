@@ -85,8 +85,8 @@ export function useGameBoard({
   )
 
   const actions = useGameBoardActions({
-    authIdentity, emptyBoard, humanSymbol, isAIGame, isExpandedLocalGame, isRoomMultiplayerGame,
-    localTurnPlayers, normalizedTimeControl, onGameEnd, refs, roomData, setters, state,
+    authIdentity, emptyBoard, humanSymbol, isAIGame, isExpandedLocalGame, isLocalOnlyGame, isRoomMultiplayerGame,
+    localTurnPlayers, normalizedBoardSize, normalizedTimeControl, onGameEnd, players, refs, roomData, setters, state,
     viewerLocalToken, viewerSymbol, currentLocalPlayer,
   })
 
@@ -118,11 +118,23 @@ export function useGameBoard({
     resetMatchState: actions.resetCurrentMatchState,
     roomData,
     shouldRunExpandedLocalAI: !isRoomMultiplayerGame || isRoomHost,
-    setters: { ...setters, onTimeUp: actions.skipCurrentTurn, secondsLeft: state.secondsLeft },
+    setters: { ...setters, onTimeUp: actions.handleClockTimeout, secondsLeft: state.secondsLeft },
     timeControl,
     winner: state.winner,
     winningTiles: state.winningTiles,
   })
+
+  // Look up a player's chess-clock seconds. The active player's clock is the
+  // live ticking `secondsLeft`; everyone else's is read from the frozen bank
+  // ref so the inactive cards keep showing the time the player had left when
+  // their turn ended.
+  const getPlayerClockSeconds = (symbol) => {
+    if (!symbol) return state.secondsLeft
+    if (symbol === state.currentPlayer) return state.secondsLeft
+    const bank = refs.playerClocksRef?.current?.[symbol]
+    if (typeof bank === 'number') return Math.max(0, Math.ceil(bank))
+    return normalizedTimeControl
+  }
 
   return {
     board: state.board,
@@ -132,6 +144,7 @@ export function useGameBoard({
     currentPlayer: state.currentPlayer,
     currentLocalPlayer,
     gameOver: state.gameOver,
+    getPlayerClockSeconds,
     handleAbort: actions.handleAbort,
     handleGiveUp: actions.handleGiveUp,
     handleTileClick: actions.handleTileClick,
@@ -147,6 +160,7 @@ export function useGameBoard({
     markerColorBySymbol,
     markerDisplayBySymbol,
     normalizedBoardSize,
+    normalizedTimeControl,
     openSettingsMenu: actions.openSettingsMenu,
     openTileCount: getEmptyTiles(state.board).length,
     playerOrder,
