@@ -1,4 +1,5 @@
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const USERNAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
 const VALID_ROLES = new Set(['player', 'admin', 'moderator']);
 
 const createValidationError = (message, statusCode = 400) => {
@@ -39,6 +40,21 @@ const validateProfileUpdateDto = (payload = {}) => {
     if (trimmedName.length < 3 || trimmedName.length > 50) {
       throw createValidationError('name must be 3-50 characters.');
     }
+  }
+
+  if (dto.username !== undefined) {
+    if (typeof dto.username !== 'string') {
+      throw createValidationError('username must be a string.');
+    }
+
+    const trimmedUsername = dto.username.trim();
+    if (trimmedUsername.length < 3 || trimmedUsername.length > 30) {
+      throw createValidationError('Username must be 3-30 characters.');
+    }
+    if (!USERNAME_PATTERN.test(trimmedUsername)) {
+      throw createValidationError('Username may only contain letters, numbers, _ and -.');
+    }
+    dto.username = trimmedUsername;
   }
 
   if (dto.email !== undefined && (typeof dto.email !== 'string' || !EMAIL_PATTERN.test(dto.email))) {

@@ -57,6 +57,7 @@ const updateProfileByUserId = async (userId, updates) => {
   const payload = {}
 
   if (updates.name !== undefined) payload.name = updates.name.trim()
+  if (updates.username !== undefined) payload.username = updates.username.trim()
   if (updates.email !== undefined) payload.email = updates.email.toLowerCase()
   if (updates.country !== undefined) payload.country = updates.country
   if (updates.role !== undefined) payload.role = updates.role
@@ -66,10 +67,20 @@ const updateProfileByUserId = async (userId, updates) => {
   if (updates.avatarUrl !== undefined) payload.avatar = updates.avatarUrl
   if (updates.passwordHash !== undefined) payload.password = updates.passwordHash
 
-  const updatedUser = await User.findByIdAndUpdate(user._id, payload, {
-    new: true,
-    runValidators: true,
-  })
+  let updatedUser
+  try {
+    updatedUser = await User.findByIdAndUpdate(user._id, payload, {
+      new: true,
+      runValidators: true,
+    })
+  } catch (error) {
+    if (error?.code === 11000 && error?.keyPattern?.username) {
+      const conflict = new Error('Username already taken.')
+      conflict.statusCode = 409
+      throw conflict
+    }
+    throw error
+  }
 
   return {
     success: true,

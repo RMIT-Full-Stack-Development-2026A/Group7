@@ -203,9 +203,6 @@ const CreateRoomPage = ({ onCreateRoom }) => {
               </button>
             ))}
           </div>
-          <p className="setup-helper-text">
-            Each player gets this much total thinking time. The clock only ticks on the player's own turn — running out forfeits the match.
-          </p>
         </div>
 
         <button

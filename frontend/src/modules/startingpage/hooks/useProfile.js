@@ -3,7 +3,7 @@ import { useApi } from './useApi';
 import { getApiBaseUrl } from '../../../config/api/baseUrl.js';
 import { Crown, Globe, ShieldCheck, UserRound } from 'lucide-react';
 import { getStoredAuthIdentity, resolveAuthIdentity } from '../../gameroom/utils/authIdentity.js';
-import { validateCountry, validateEmail } from '../../register/modules/ValidationHandler.js';
+import { validateCountry, validateEmail, validateUsername } from '../../register/modules/ValidationHandler.js';
 import { getRawAvatarValue, resolveAvatarUrl } from '../../../shared/utils/avatar.utils.js';
 import {
   buildProfileFromStoredIdentity,
@@ -99,9 +99,16 @@ export function useProfile() {
     event.preventDefault();
     const trimmedEmail = formState.email.trim();
     const trimmedCountry = formState.country.trim();
+    const trimmedUsername = formState.username.trim();
+    const usernameError = validateUsername(trimmedUsername);
     const emailError = validateEmail(trimmedEmail);
     const countryError = validateCountry(trimmedCountry);
 
+    if (usernameError) {
+      setSaveMessageTone('error');
+      setSaveMessage(usernameError);
+      return;
+    }
     if (emailError) {
       setSaveMessageTone('error');
       setSaveMessage(`Please enter a valid email address. ${emailError}`);
@@ -117,17 +124,23 @@ export function useProfile() {
       const updated = {
         ...profile, ...formState,
         email: trimmedEmail, country: trimmedCountry,
+        username: trimmedUsername,
         userId: profile.userId || userId,
-        username: profile.username || formState.username,
       };
-      const result = await call('/profile', {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${getApiBaseUrl()}/profile`, {
         method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify(updated),
       });
+      const result = await response.json().catch(() => ({}));
 
-      if (!(result?.success || result?.profile)) {
+      if (!response.ok || !(result?.success || result?.profile)) {
         setSaveMessageTone('error');
-        setSaveMessage('Failed to update profile.');
+        setSaveMessage(result?.error || result?.message || 'Failed to update profile.');
         return;
       }
 

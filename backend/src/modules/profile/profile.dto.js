@@ -14,6 +14,7 @@ const PROFILE_FIELDS = [
 
 const PROFILE_UPDATE_FIELDS = [
   'name',
+  'username',
   'email',
   'passwordHash',
   'country',

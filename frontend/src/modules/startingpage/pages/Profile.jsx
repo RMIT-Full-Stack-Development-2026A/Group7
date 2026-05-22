@@ -122,7 +122,15 @@ export function Profile() {
                       </label>
                       <label className="block">
                         <span className="profile-field-label mb-2 block text-sm font-medium text-slate-200">Username</span>
-                        <input type="text" className="neon-input px-4 py-3 outline-none transition opacity-70" value={formState.username} readOnly />
+                        <input
+                          type="text"
+                          className="neon-input px-4 py-3 outline-none transition"
+                          value={formState.username}
+                          onChange={(event) => setFormState((current) => ({ ...current, username: event.target.value }))}
+                          autoComplete="username"
+                          minLength={3}
+                          maxLength={30}
+                        />
                       </label>
                       <label className="block">
                         <span className="profile-field-label mb-2 block text-sm font-medium text-slate-200">Email</span>
