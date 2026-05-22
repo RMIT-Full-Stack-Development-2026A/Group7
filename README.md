@@ -86,4 +86,98 @@ Total: 25 (5 members × 5).
     4.	Evaluation - Huy
     5.	Conclusion - Dat
 
-
+## Project Structure
+Group7/
+├── backend/
+│   ├── src/
+│   │   ├── config/
+│   │   │   ├── cors.js
+│   │   │   └── db.js
+│   │   │
+│   │   ├── middlewares/
+│   │   │   ├── accountStatusMiddleware.js
+│   │   │   ├── authMiddleware.js
+│   │   │   ├── bruteForce.js
+│   │   │   ├── errorMiddleware.js
+│   │   │   ├── roleMiddleware.js
+│   │   │   └── validateMiddleware.js
+│   │   │
+│   │   ├── modules/
+│   │   │   ├── auth/
+│   │   │   │   ├── auth.routes.js
+│   │   │   │   ├── auth.controller.js
+│   │   │   │   ├── auth.service.js
+│   │   │   │   ├── auth.repository.js
+│   │   │   │   ├── auth.model.js
+│   │   │   │   └── auth.validator.js
+│   │   │   │
+│   │   │   ├── game/
+│   │   │   │   ├── game.routes.js
+│   │   │   │   ├── game.controller.js
+│   │   │   │   ├── game.service.js
+│   │   │   │   ├── game.repository.js
+│   │   │   │   ├── game.model.js
+│   │   │   │   ├── WinDetection.js
+│   │   │   │   └── game.helpers.js
+│   │   │   │
+│   │   │   ├── gameroom/
+│   │   │   │   ├── gameroom.routes.js
+│   │   │   │   ├── gameroom.controller.js
+│   │   │   │   ├── gameroom.service.js
+│   │   │   │   ├── gameroom.repository.js
+│   │   │   │   ├── gameroom.model.js
+│   │   │   │   └── gameroom.validator.js
+│   │   │   │
+│   │   │   ├── profile/
+│   │   │   ├── admin/
+│   │   │   ├── social/
+│   │   │   └── AILogic/
+│   │   │
+│   │   ├── services/
+│   │   │   ├── email.service.js
+│   │   │   └── paypal.service.js
+│   │   │
+│   │   ├── shared/
+│   │   │   ├── errors/
+│   │   │   └── utils/
+│   │   │
+│   │   ├── socket/
+│   │   │   └── gameroom.socket.js
+│   │   │
+│   │   ├── app.js
+│   │   └── server.js
+│   │
+│   └── package.json
+│
+├── frontend/
+│   ├── src/
+│   │   ├── config/
+│   │   │   └── api/
+│   │   │
+│   │   ├── router/
+│   │   │   ├── RouterConfig.jsx
+│   │   │   └── routes.config.js
+│   │   │
+│   │   ├── services/
+│   │   │   └── httpHelper.js
+│   │   │
+│   │   ├── shared/
+│   │   │   ├── components/
+│   │   │   ├── styles/
+│   │   │   ├── utils/
+│   │   │   └── assets/
+│   │   │
+│   │   ├── modules/
+│   │   │   ├── login/
+│   │   │   ├── register/
+│   │   │   ├── gameroom/
+│   │   │   ├── gameboard/
+│   │   │   ├── startingpage/
+│   │   │   ├── admin/
+│   │   │   └── social/
+│   │   │
+│   │   ├── AppShell.jsx
+│   │   └── main.jsx
+│   │
+│   └── package.json
+└── package.json
