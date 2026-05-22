@@ -87,6 +87,7 @@ Total: 25 (5 members × 5).
     5.	Conclusion - Dat
 
 ## Project Structure
+```
 Group7/
 ├── backend/
 │   ├── src/
@@ -181,3 +182,4 @@ Group7/
 │   │
 │   └── package.json
 └── package.json
+```
