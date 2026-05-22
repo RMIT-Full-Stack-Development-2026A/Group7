@@ -15,6 +15,7 @@ export const ROUTES = {
   SETTING_PAGE: '/setting-page',
   SUBSCRIPTION: '/subscription',
   ADMIN: '/admin',
+  FORBIDDEN: '/forbidden',
   GAME_LOADING: '/game-loading',
   VS_COMPUTER: '/vs-computer',
   VS_FRIEND: '/vs-friend',

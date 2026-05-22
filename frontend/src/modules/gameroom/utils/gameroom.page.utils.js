@@ -216,7 +216,7 @@ export const buildGameStartPayload = (room, roomPlayers, returnToRoute) => {
       roomId: room?.roomId,
       roomDbId: room?._id,
       boardSize: normalizedBoardSize,
-      timeControl: settings.timeToThink || 60,
+      timeControl: settings.timeToThink || 240,
       aiDifficulty: aiPlayer?.aiDifficulty || 'medium',
       returnTo: ROUTES.GAMEROOM,
       roomState: { createdRoom: room, returnTo: returnToRoute },

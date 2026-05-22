@@ -54,6 +54,9 @@ const CreateRoomPage = ({ onCreateRoom }) => {
     boardSizes,
     markerOptions,
     timeOptions,
+    timerMinSeconds,
+    timerMaxSeconds,
+    timerStepSeconds,
     setPlayers,
     setBoardStyle,
     setBoardSize,
@@ -176,13 +179,13 @@ const CreateRoomPage = ({ onCreateRoom }) => {
         </div>
 
         <div className="setup-section">
-          <label>Time to Think</label>
+          <label>Maximum Timer Per Player (Chess-Clock)</label>
           <div className="time-slider-container">
             <input
               type="range"
-              min="60"
-              max="120"
-              step="15"
+              min={timerMinSeconds}
+              max={timerMaxSeconds}
+              step={timerStepSeconds}
               value={timeToThink}
               onChange={(e) => setTimeToThink(parseInt(e.target.value, 10))}
               className="time-slider"
@@ -200,6 +203,9 @@ const CreateRoomPage = ({ onCreateRoom }) => {
               </button>
             ))}
           </div>
+          <p className="setup-helper-text">
+            Each player gets this much total thinking time. The clock only ticks on the player's own turn — running out forfeits the match.
+          </p>
         </div>
 
         <button

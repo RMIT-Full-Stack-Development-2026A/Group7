@@ -29,8 +29,11 @@ const validRoomStatuses = ['pending', 'ready', 'started', 'completed']
 
 const validateRoomSize = (size) => validRoomSizes.includes(size)
 
+// Per-player chess-clock max bank, in seconds. Accept the legacy 60s lower
+// bound so historical rooms still validate, but the create-room UI enforces
+// the new 240s (4 min) / 720s (12 min) range.
 const validateTimeToThink = (time) =>
-  typeof time === 'number' && time >= 60 && time <= 120
+  typeof time === 'number' && time >= 60 && time <= 720
 
 const validateRoomName = (name) =>
   typeof name === 'string' && name.trim().length > 0 && name.length <= 50
@@ -51,7 +54,7 @@ const assertCreateGameroomRequest = (body = {}) => {
   }
 
   if (timeToThink && !validateTimeToThink(timeToThink)) {
-    throw new ErrorResponse('Invalid timeToThink. Must be between 60 and 120 seconds', 400)
+    throw new ErrorResponse('Invalid timeToThink. Must be between 60 and 720 seconds (4-12 minute chess clock).', 400)
   }
 
   if (boardStyle && !validBoardStyles.includes(boardStyle)) {

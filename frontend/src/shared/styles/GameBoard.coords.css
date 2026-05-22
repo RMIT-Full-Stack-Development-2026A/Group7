@@ -1,0 +1,162 @@
+/* The coords frame must reserve enough width for the board to render at its
+   intrinsic size. We pin the cell-row width to the board's own min() formula
+   (matching .game-board-10 / .game-board-15 in GameBoard.base.css) so the
+   top/bottom letter rows and the wrapping container don't collapse when the
+   parent uses `width: fit-content`. */
+:root {
+  --coord-gutter: 24px;
+  --coord-cell-row-10: min(72vw, 72vh, 620px);
+  --coord-cell-row-15: min(86vw, 86vh, 860px);
+  --coord-cell-row: var(--coord-cell-row-10);
+}
+
+.gameboard-coords-frame {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: calc(var(--coord-cell-row) + (var(--coord-gutter) * 2));
+  max-width: 100%;
+}
+
+.gameboard-coords-row {
+  display: grid;
+  grid-template-columns: var(--coord-gutter) repeat(var(--coord-columns, 10), 1fr) var(--coord-gutter);
+  align-items: center;
+  width: 100%;
+}
+
+.gameboard-coords-body {
+  display: grid;
+  grid-template-columns: var(--coord-gutter) var(--coord-cell-row) var(--coord-gutter);
+  align-items: stretch;
+  width: 100%;
+}
+
+.gameboard-coords-col {
+  display: grid;
+  grid-template-rows: repeat(var(--coord-rows, 10), 1fr);
+  align-items: center;
+  justify-items: center;
+  width: var(--coord-gutter);
+}
+
+.gameboard-coords-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(10px, 1.05vw, 14px);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--gb-soft-text, #c9d8f7);
+  opacity: 0.78;
+  user-select: none;
+}
+
+.gameboard-coords-corner {
+  display: inline-block;
+  width: var(--coord-gutter);
+}
+
+/* Inside the coords frame, the board fills the reserved middle column exactly. */
+.gameboard-coords-frame .game-board,
+.gameboard-coords-frame .game-board-intersections {
+  width: 100%;
+  max-width: var(--coord-cell-row);
+  margin: 0;
+  align-self: stretch;
+}
+
+.board-shell-10 .gameboard-coords-frame,
+.board-shell-10 .gameboard-coords-row,
+.board-shell-10 .gameboard-coords-body {
+  --coord-columns: 10;
+  --coord-rows: 10;
+  --coord-cell-row: var(--coord-cell-row-10);
+}
+
+.board-shell-15 .gameboard-coords-frame,
+.board-shell-15 .gameboard-coords-row,
+.board-shell-15 .gameboard-coords-body {
+  --coord-columns: 15;
+  --coord-rows: 15;
+  --coord-cell-row: var(--coord-cell-row-15);
+}
+
+body[data-app-theme='light'] .gameboard-coords-cell {
+  color: #495a7e;
+  opacity: 0.85;
+}
+
+/* === Gameboard chat docked panel === */
+.gameboard-chat-wrapper {
+  position: fixed;
+  left: 24px;
+  bottom: 24px;
+  z-index: 1500;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.gameboard-chat-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(143, 179, 255, 0.42);
+  background: linear-gradient(135deg, #3b82f6 0%, #7c3aed 100%);
+  color: #fff;
+  font-size: 1.1rem;
+  cursor: pointer;
+  box-shadow: 0 12px 24px rgba(8, 18, 36, 0.4);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.gameboard-chat-toggle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 30px rgba(8, 18, 36, 0.55);
+}
+
+.gameboard-chat-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.85);
+}
+
+.gameboard-chat-wrapper .chat-bar {
+  position: relative;
+  left: auto;
+  bottom: auto;
+  width: 340px;
+  max-width: calc(100vw - 48px);
+}
+
+.gameboard-chat-collapsed .chat-bar {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .gameboard-chat-wrapper {
+    left: 12px;
+    bottom: 12px;
+  }
+  .gameboard-chat-wrapper .chat-bar {
+    width: min(320px, calc(100vw - 24px));
+  }
+}

@@ -1,0 +1,152 @@
+/* Classic theme — give it a distinctly more "wooden / parchment" feel so it does
+   not look identical to the modern theme. Modern stays glassy/futuristic. */
+
+.gameboard-style-classic .gameboard-lite-board-container {
+  background:
+    radial-gradient(circle at top, rgba(193, 138, 71, 0.18), transparent 48%),
+    linear-gradient(180deg, #6b3f1a 0%, #50301a 100%);
+  border: 2px solid rgba(112, 71, 33, 0.92);
+  border-radius: 24px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 224, 178, 0.18),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.25),
+    0 26px 60px rgba(36, 18, 4, 0.55);
+}
+
+.gameroom-style-classic .gameboard-coords-cell,
+.gameboard-style-classic .gameboard-coords-cell {
+  color: #f3deb6;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-family: 'Georgia', 'Cambria', serif;
+  opacity: 0.92;
+}
+
+.gameboard-style-classic .game-board {
+  gap: 2px;
+  padding: 16px;
+  background:
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.05) 0 1px, transparent 1px 24px),
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.05) 0 1px, transparent 1px 24px),
+    linear-gradient(180deg, #d7a25e 0%, #c1864a 100%);
+  border: 2px solid rgba(94, 56, 22, 0.92);
+  border-radius: 16px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 235, 198, 0.6),
+    inset 0 -3px 0 rgba(70, 38, 12, 0.55),
+    0 12px 26px rgba(40, 22, 6, 0.45);
+}
+
+.gameboard-style-classic .tile {
+  border-radius: 6px;
+  border: 1px solid rgba(94, 56, 22, 0.55);
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 245, 215, 0.55), transparent 60%),
+    linear-gradient(180deg, #f7e2b5 0%, #e7c587 100%);
+  color: #4a2810;
+  font-family: 'Georgia', 'Cambria', serif;
+  font-weight: 900;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 2px 4px rgba(80, 44, 12, 0.18);
+}
+
+.gameboard-style-classic .tile:hover:not(:disabled) {
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 250, 230, 0.7), transparent 60%),
+    linear-gradient(180deg, #ffe8b8 0%, #efc78a 100%);
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 6px 14px rgba(80, 44, 12, 0.28);
+}
+
+.gameboard-style-classic .mark-x,
+.gameboard-style-classic .mark-custom[class*="mark-x"] {
+  color: #8a1c1c;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.gameboard-style-classic .mark-o,
+.gameboard-style-classic .mark-custom[class*="mark-o"] {
+  color: #0e3c75;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.gameboard-style-classic .tile-winning {
+  background: linear-gradient(180deg, #ffe17a 0%, #f1ad42 100%) !important;
+  border-color: #c97a16 !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 0 16px rgba(255, 196, 92, 0.65) !important;
+}
+
+.gameboard-style-classic .game-board-intersections {
+  background:
+    repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.04) 0 1px, transparent 1px 18px),
+    linear-gradient(180deg, #d7a25e 0%, #c1864a 100%);
+  border: 2px solid rgba(94, 56, 22, 0.92);
+  border-radius: 12px;
+}
+
+.gameboard-style-classic .game-board-intersections-grid {
+  border-right-color: rgba(94, 56, 22, 0.78);
+  border-bottom-color: rgba(94, 56, 22, 0.78);
+  background-image:
+    linear-gradient(to right, rgba(94, 56, 22, 0.78) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(94, 56, 22, 0.78) 1px, transparent 1px);
+}
+
+.gameboard-style-classic .game-board-intersection::before {
+  background: rgba(94, 56, 22, 0.55);
+}
+
+.gameboard-style-classic .game-board-intersection.occupied {
+  color: #4a2810 !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.gameboard-style-classic .game-board-intersection.winning {
+  background: rgba(255, 196, 92, 0.32);
+  box-shadow: 0 0 0 2px rgba(201, 122, 22, 0.95), 0 0 18px rgba(255, 196, 92, 0.55);
+}
+
+/* Make modern even more distinct: tighter neon glow + dark glass */
+.gameboard-style-modern .tile {
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 30% 25%, rgba(124, 92, 255, 0.16), transparent 55%),
+    linear-gradient(180deg, rgba(15, 27, 53, 0.98) 0%, rgba(9, 18, 38, 0.98) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 0 0 1px rgba(124, 196, 255, 0.08),
+    0 12px 22px rgba(8, 18, 36, 0.32);
+}
+
+.gameboard-style-modern .tile:hover:not(:disabled) {
+  background:
+    radial-gradient(circle at 30% 25%, rgba(124, 92, 255, 0.32), transparent 55%),
+    linear-gradient(180deg, rgba(30, 52, 102, 1) 0%, rgba(19, 36, 76, 1) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 0 0 1px rgba(124, 196, 255, 0.28),
+    0 18px 28px rgba(76, 124, 255, 0.32);
+}
+
+body[data-app-theme='light'] .gameboard-style-classic .gameboard-lite-board-container {
+  background:
+    radial-gradient(circle at top, rgba(232, 196, 134, 0.36), transparent 48%),
+    linear-gradient(180deg, #f1d8a4 0%, #d9b06c 100%);
+  border: 2px solid rgba(120, 80, 32, 0.6);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 251, 222, 0.85),
+    inset 0 -2px 0 rgba(120, 80, 32, 0.2),
+    0 26px 60px rgba(120, 80, 32, 0.32);
+}
+
+body[data-app-theme='light'] .gameboard-style-classic .gameboard-coords-cell {
+  color: #6e441a;
+}
+
+body[data-app-theme='light'] .gameboard-style-classic .tile {
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 251, 230, 0.85), transparent 60%),
+    linear-gradient(180deg, #fff1cd 0%, #f1d493 100%);
+  color: #4a2810;
+}

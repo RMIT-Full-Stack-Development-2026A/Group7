@@ -14,7 +14,7 @@ import {
   applyRemoteMoveResult as applyRemoteMoveResultTransition,
   resetMatchState,
 } from '../logic/gameboardStateTransitions.js'
-import { REMOTE_MOVE_TIMEOUT_MS } from '../logic/gameboardLogic.js'
+import { buildRemoteParticipantPayloads, REMOTE_MOVE_TIMEOUT_MS } from '../logic/gameboardLogic.js'
 
 export const useGameBoardActions = ({
   authIdentity,
@@ -22,10 +22,13 @@ export const useGameBoardActions = ({
   humanSymbol,
   isAIGame,
   isExpandedLocalGame,
+  isLocalOnlyGame,
   isRoomMultiplayerGame,
   localTurnPlayers,
+  normalizedBoardSize,
   normalizedTimeControl,
   onGameEnd,
+  players,
   refs,
   roomData,
   setters,
@@ -164,7 +167,7 @@ export const useGameBoardActions = ({
       setters.setGameOver(true)
 
       if (state.useRemoteSession && state.gameId) {
-        try { await gameAPI.abortGame(state.gameId) }
+        try { await gameAPI.abortGame(state.gameId, { persist: false }) }
         catch (error) { console.error('Failed to abort game on admin close:', error) }
       }
 
@@ -179,46 +182,34 @@ export const useGameBoardActions = ({
     }
   }, [authIdentity?.id, authIdentity?.name, authIdentity?.userId, authIdentity?.username, navigate, onGameEnd, refs.gameOverRef, roomData?.roomId, setters, state.gameId, state.useRemoteSession])
 
-  const skipCurrentTurn = useCallback(async () => {
+  // Chess-clock timeout: the player whose bank reached zero forfeits the
+  // match. We resign them server-side (if remote), broadcast the resignation
+  // to other clients in a multiplayer room, and apply the local result.
+  const handleClockTimeout = useCallback(async () => {
     if (refs.gameOverRef.current) return
 
-    const skippedPlayer = refs.currentPlayerRef.current || state.currentPlayer
-    const nextPlayer = resolveNextPlayer(skippedPlayer)
-    const timeTaken = Math.max(0, normalizedTimeControl - state.secondsLeft)
-      || normalizedTimeControl
+    const timedOutPlayer = refs.currentPlayerRef.current || state.currentPlayer
+    if (!timedOutPlayer) return
 
-    if (isRoomMultiplayerGame && roomData?.roomId) {
-      gameroomSocketService.emit('game-action', {
-        roomId: roomData.roomId,
-        action: 'turn-skipped',
-        payload: { skippedPlayer, nextPlayer },
-      })
-      return
-    }
+    const opponentWinner = resolveNextPlayer(timedOutPlayer)
 
     if (state.useRemoteSession && state.gameId) {
       setters.setMoveMakingState(true)
       try {
-        const response = await gameAPI.skipTurn(
-          state.gameId,
-          { player: skippedPlayer, timeTaken },
-          REMOTE_MOVE_TIMEOUT_MS
-        )
-        if (!response.ok) throw new Error(response.data?.message || response.data?.error || 'Skip turn failed')
-        applyTurnSkip({
-          skippedPlayer: response.data?.data?.skippedPlayer || skippedPlayer,
-          nextPlayer: response.data?.data?.currentTurn || nextPlayer,
-        })
+        const response = await gameAPI.resignGame(state.gameId)
+        if (!response.ok) {
+          console.warn('Backend resign on clock timeout failed:', response.data?.message || response.data?.error)
+        }
       } catch (error) {
-        console.error('Failed to skip timed-out turn:', error)
+        console.error('Failed to resign timed-out game:', error)
       } finally {
         setters.setMoveMakingState(false)
       }
-      return
     }
 
-    applyTurnSkip({ skippedPlayer, nextPlayer })
-  }, [applyTurnSkip, isRoomMultiplayerGame, normalizedTimeControl, refs.currentPlayerRef, refs.gameOverRef, resolveNextPlayer, roomData?.roomId, setters, state.currentPlayer, state.gameId, state.secondsLeft, state.useRemoteSession])
+    applyResignationResult({ winner: opponentWinner, resignedBy: timedOutPlayer })
+    emitRoomResignation(opponentWinner, timedOutPlayer)
+  }, [applyResignationResult, emitRoomResignation, refs.currentPlayerRef, refs.gameOverRef, resolveNextPlayer, setters, state.currentPlayer, state.gameId, state.useRemoteSession])
 
   const resetCurrentMatchState = useCallback(() => resetMatchState({
     refs, setters, emptyBoard, isExpandedLocalGame, localTurnPlayers, normalizedTimeControl,
@@ -293,8 +284,30 @@ export const useGameBoardActions = ({
     setters.setShowSettingsMenu(false)
 
     if (state.useRemoteSession && state.gameId) {
-      try { await gameAPI.abortGame(state.gameId) }
+      try { await gameAPI.abortGame(state.gameId, { persist: true, reason: 'resignation' }) }
       catch (error) { console.error('Failed to abort backend game:', error) }
+    } else if (isLocalOnlyGame && !refs.localHistorySavedRef.current) {
+      const recordedMoves = Array.isArray(refs.localMovesRef?.current) ? refs.localMovesRef.current : []
+      if (recordedMoves.length > 0) {
+        refs.localHistorySavedRef.current = true
+        try {
+          const participants = buildRemoteParticipantPayloads({ localTurnPlayers, players })
+          await gameAPI.saveLocalHistory({
+            boardSize: normalizedBoardSize,
+            timeControl: normalizedTimeControl,
+            participants,
+            winner: null,
+            winningTiles: [],
+            totalMoves: recordedMoves.length,
+            startedAt: refs.matchStartedAtRef.current,
+            moves: recordedMoves,
+            status: 'abandoned',
+          })
+        } catch (error) {
+          refs.localHistorySavedRef.current = false
+          console.error('Failed to save aborted local game:', error)
+        }
+      }
     }
     if (onGameEnd) onGameEnd(null)
     navigate(ROUTES.MAIN_MENU)
@@ -307,7 +320,7 @@ export const useGameBoardActions = ({
     emitRoomMove,
     applyResignationResult,
     emitRoomResignation,
-    skipCurrentTurn,
+    handleClockTimeout,
     resetCurrentMatchState,
     openSettingsMenu,
     closeSettingsMenu,

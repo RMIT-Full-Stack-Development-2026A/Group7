@@ -1,6 +1,9 @@
 // Stateless helpers used by game.controller.js: identity resolution, guest
 // fallback, participant normalization, and player construction for /games POST.
-const profileService = require('../profile/profile.service')
+// Use the profile module's published interface (../profile) rather than its
+// internal service file — see backend/src/modules/profile/index.js for the
+// contract that bounds what game can call.
+const profileService = require('../profile')
 
 const asyncHandler = (fn) => (req, res, next) => {
   Promise.resolve(fn(req, res, next)).catch(next)

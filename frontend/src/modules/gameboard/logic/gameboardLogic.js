@@ -1,5 +1,5 @@
 import { getMarkerLabelsBySymbol, getMarkerSymbols, markerTermToSymbol } from '../../../shared/utils/marker.utils.js'
-import { AI_AVATAR, resolveAvatarUrl } from '../../../shared/utils/avatar.utils.js'
+import { AI_AVATAR, resolveAvatarUrl, sanitizeAvatarForTransport } from '../../../shared/utils/avatar.utils.js'
 
 export const DEFAULT_PLAYERS = {
   X: {
@@ -154,7 +154,7 @@ export const buildRemotePlayerPayloads = ({ roomData, players, aiSymbol, humanSy
   const aiPayload = (symbol) => ({
     playerId: `ai_${symbol}_${Date.now()}`,
     playerName: players[symbol].name,
-    avatar: players[symbol]?.avatar || AI_AVATAR,
+    avatar: sanitizeAvatarForTransport(players[symbol]?.avatar) || AI_AVATAR,
     playerRank: aiDifficulty === 'easy' ? 1000 : aiDifficulty === 'hard' ? 1400 : 1200,
     isAI: true,
     aiDifficulty,
@@ -170,11 +170,20 @@ export const buildRemotePlayerPayloads = ({ roomData, players, aiSymbol, humanSy
   const humanPayload = (symbol) => {
     const source = humanSourceFor(symbol)
     const isViewerSymbol = symbol === humanSymbol
+    const candidateAvatars = [
+      isViewerSymbol ? authIdentity?.avatar : '',
+      players[symbol]?.avatar,
+      source?.avatar,
+      source?.avatarUrl,
+    ]
+    const cleanAvatar = candidateAvatars
+      .map(sanitizeAvatarForTransport)
+      .find((entry) => Boolean(entry)) || ''
 
     return {
       playerId: (isViewerSymbol ? (authIdentity?.userId || authIdentity?.id) : null) || players[symbol]?.userId || source?.userId || source?._id || `player_${symbol}_${Date.now()}`,
       playerName: players[symbol].name,
-      avatar: (isViewerSymbol ? authIdentity?.avatar : '') || players[symbol]?.avatar || source?.avatar || source?.avatarUrl || '',
+      avatar: cleanAvatar,
       playerRank: 1200,
       isAI: false,
       aiDifficulty: null,
@@ -192,7 +201,7 @@ export const buildRemoteParticipantPayloads = ({ localTurnPlayers, players, remo
     return localTurnPlayers.map((player, index) => ({
       playerId: player.id || player.userId || `participant_${index + 1}`,
       playerName: player.name || `Player ${index + 1}`,
-      avatar: player.avatar || '',
+      avatar: sanitizeAvatarForTransport(player.avatar),
       playerSymbol: player.token || `P${index + 1}`,
       marker: player.marker || player.token || `P${index + 1}`,
       markerColor: player.markerColor || '',
@@ -207,7 +216,7 @@ export const buildRemoteParticipantPayloads = ({ localTurnPlayers, players, remo
     return {
       playerId: remoteSource.playerId || players[symbol]?.userId || `participant_${symbol}`,
       playerName: remoteSource.playerName || players[symbol]?.name || `Player ${index + 1}`,
-      avatar: remoteSource.avatar || players[symbol]?.avatar || '',
+      avatar: sanitizeAvatarForTransport(remoteSource.avatar || players[symbol]?.avatar),
       playerSymbol: symbol,
       marker: players[symbol]?.marker || symbol,
       markerColor: players[symbol]?.markerColor || '',

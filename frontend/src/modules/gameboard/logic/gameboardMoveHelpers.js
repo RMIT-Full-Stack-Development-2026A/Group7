@@ -122,9 +122,17 @@ export const completeMove = ({
   )
 }
 
-export const pickExpandedLocalAIMove = ({ board, currentLocalPlayer, localTurnPlayers }) => {
+export const pickExpandedLocalAIMove = ({ board, currentLocalPlayer, localTurnPlayers, lastMove = null }) => {
   const aiToken = currentLocalPlayer.token
   const opponents = localTurnPlayers.filter((player) => player.token !== aiToken)
+  const difficulty = currentLocalPlayer.aiDifficulty || 'medium'
+
+  // Easy AI only looks at neighbours of the most recent human move; bypass the
+  // other heuristics so the spec rule is preserved.
+  if (difficulty === 'easy') {
+    return getAIMove(board, 'easy', aiToken, opponents[0]?.token || 'X', lastMove)
+  }
+
   const emptyTiles = getEmptyTiles(board)
 
   for (const { row, col } of emptyTiles) {
@@ -158,9 +166,10 @@ export const pickExpandedLocalAIMove = ({ board, currentLocalPlayer, localTurnPl
 
   return getAIMove(
     board,
-    currentLocalPlayer.aiDifficulty || 'medium',
+    difficulty,
     aiToken,
-    primaryThreat?.token || opponents[0]?.token || 'X'
+    primaryThreat?.token || opponents[0]?.token || 'X',
+    lastMove,
   )
 }
 

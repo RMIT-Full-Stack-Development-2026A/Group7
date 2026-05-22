@@ -23,7 +23,10 @@ export const gameAPI = {
   makeAIMove: (gameId, timeoutMs) => httpHelper.post(GAME_API.gameAIMove(gameId), {}, undefined, timeoutMs),
   skipTurn: (gameId, payload, timeoutMs) => httpHelper.post(GAME_API.gameSkipTurn(gameId), payload, undefined, timeoutMs),
   resignGame: (gameId) => httpHelper.post(GAME_API.gameResign(gameId), {}),
-  abortGame: (gameId) => httpHelper.post(GAME_API.gameAbort(gameId), {}),
+  abortGame: (gameId, options = {}) => httpHelper.post(GAME_API.gameAbort(gameId), {
+    persist: options.persist !== undefined ? Boolean(options.persist) : true,
+    reason: options.reason || 'resignation',
+  }),
   getGame: (gameId) => httpHelper.get(GAME_API.gameById(gameId)),
   getGameReplay: (gameId) => httpHelper.get(GAME_API.gameReplay(gameId)),
 }
