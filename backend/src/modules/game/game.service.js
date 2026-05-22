@@ -227,6 +227,11 @@ const resignGame = async (gameId, playerId) => {
 
 const getGameReplay = async (gameId) => {
   const game = await getGameById(gameId)
+  if (game.status === 'abandoned') {
+    const error = new Error('Aborted battles cannot be recorded.')
+    error.statusCode = 410
+    throw error
+  }
   if (game.status !== 'completed') throw new Error('Game is not completed yet')
   return buildReplayFromGame(game)
 }
