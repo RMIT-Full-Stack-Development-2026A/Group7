@@ -58,13 +58,13 @@ npm run tunnel
 
 ## Contribution Table
 
-| Member Name      | Student ID | Role               | Assigned Tasks                             | Score |
-| ---------------- | ---------- | ------------------ | -------------------------------------------| ----- |
-| Le Bao Quang Huy | s4102871   | PM / Tech Lead     | Gameroom, Join Match logic, set up git repo| 5     |
-| Tran Minh Nghia  | s4123236   | Developer          | Admin, Premim Subscription                 | 5     |
-| Tran Gia Khanh   | s4041377   | Developer          | Profile, Starting Page                     | 5     |
-| Nguyen Thanh Dat | s3830318   | Developer          | Login, Registration, Online Game           | 5     |
-| Pham Cao Khiem   | s4026150   | Developer          | AI Logic, Local Player, Single Player      | 5     |
+| Member Name      | Student ID | Role               | Assigned Tasks                                           | Score |
+| ---------------- | ---------- | ------------------ | ---------------------------------------------------------| ----- |
+| Le Bao Quang Huy | s4102871   | PM / Tech Lead     | Gameroom, Subscription, Join Match logic, set up git repo| 5     |
+| Tran Minh Nghia  | s4123236   | Developer          | Admin                                                    | 5     |
+| Tran Gia Khanh   | s4041377   | Developer          | Profile, Starting Page                                   | 5     |
+| Nguyen Thanh Dat | s3830318   | Developer          | Login, Registration, Online Game                         | 5     |
+| Pham Cao Khiem   | s4026150   | Developer          | AI Logic, Local Player, Single Player                    | 5     |
 
 Total: 25 (5 members × 5).
 
@@ -85,3 +85,5 @@ Total: 25 (5 members × 5).
     3.7 Khanh
     4.	Evaluation - Huy
     5.	Conclusion - Dat
+
+
